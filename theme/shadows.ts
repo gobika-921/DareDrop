@@ -1,4 +1,7 @@
-export const shadows = {
+import { colors } from "./colors";
+
+export const shadows = Object.freeze({
+  /** Flat backgrounds, chips, and simple containers. */
   none: {
     shadowColor: "transparent",
     shadowOffset: { width: 0, height: 0 },
@@ -7,46 +10,33 @@ export const shadows = {
     elevation: 0,
   },
 
-  xs: {
-    shadowColor: "#000",
+  /** Very soft lift for buttons, input fields, player chips, and segmented controls. */
+  small: {
+    shadowColor: colors.text.primary,
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.12,
-    shadowRadius: 2,
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
     elevation: 1,
   },
 
-  sm: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.16,
-    shadowRadius: 3,
-    elevation: 2,
-  },
-
-  md: {
-    shadowColor: "#000",
+  /** Primary resting elevation for cards, dare cards, player cards, and floating controls. */
+  medium: {
+    shadowColor: colors.text.primary,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.08,
     shadowRadius: 6,
-    elevation: 4,
+    elevation: 3,
   },
 
-  lg: {
-    shadowColor: "#000",
+  /** Highest elevation for bottom sheets, dialogs, floating modals, and overlay panels. */
+  large: {
+    shadowColor: colors.text.primary,
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.24,
+    shadowOpacity: 0.1,
     shadowRadius: 10,
-    elevation: 8,
+    elevation: 6,
   },
-
-  xl: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.28,
-    shadowRadius: 14,
-    elevation: 12,
-  },
-} as const;
+} as const);
 
 export type AppShadow = keyof typeof shadows;
 
