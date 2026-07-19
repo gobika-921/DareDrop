@@ -1,3 +1,239 @@
+# Introduction
+
+This roadmap defines the complete implementation strategy for DareDrop, from its current pre-alpha foundation to a production-ready mobile application.
+
+Rather than serving as a simple task list, this document acts as the project's execution plan. It organizes development into structured phases that progressively build the application's architecture, design system, gameplay systems, user experience, quality assurance, and release readiness.
+
+The roadmap is derived from the project's canonical specification documents, including the product context, UI specification, component guidelines, data model, screen specifications, gameplay rules, and comprehensive audit reports. Each phase is designed to resolve identified gaps while maintaining consistency with the intended architecture and product vision.
+
+Development should proceed sequentially through each phase. Later phases assume the successful completion of earlier foundational work, ensuring that architectural decisions, shared infrastructure, and reusable systems are established before higher-level features are implemented.
+
+The primary objectives of this roadmap are to:
+
+- Provide a structured implementation plan for the entire project lifecycle.
+- Ensure consistency between implementation and project specifications.
+- Minimize technical debt through architecture-first development.
+- Establish clear development milestones and completion criteria.
+- Produce a maintainable, scalable, and production-quality codebase.
+
+Completion of all roadmap phases signifies that DareDrop has progressed from an architectural scaffold into a fully functional, thoroughly tested, accessible, and release-ready application.
+
+# Project Objectives
+
+The primary objective of DareDrop is to build a polished, offline-first party game that delivers a premium user experience through intuitive gameplay, thoughtful interaction design, and a robust technical architecture.
+
+This roadmap is designed to guide the project from its current pre-alpha foundation to a production-ready application while maintaining consistency with the project's canonical specifications and engineering standards.
+
+The implementation should achieve the following objectives:
+
+## 1. Deliver a Complete Gameplay Experience
+
+Implement the complete gameplay loop from player setup through game summary, ensuring that every documented feature and interaction is fully functional and consistent with the product specifications.
+
+---
+
+## 2. Maintain Specification Compliance
+
+Ensure that every implementation decision aligns with the project's canonical documentation, including the product context, UI specification, screen specifications, component guidelines, data model, and gameplay rules.
+
+Documentation should remain the single source of truth throughout development.
+
+---
+
+## 3. Build a Scalable Architecture
+
+Establish a clean, modular, and maintainable architecture that clearly separates presentation, state management, business logic, persistence, and shared utilities.
+
+The architecture should support future feature expansion without requiring significant refactoring.
+
+---
+
+## 4. Create a Consistent Design System
+
+Implement a unified design system driven by semantic design tokens and reusable components to ensure visual consistency, accessibility, and maintainability across the entire application.
+
+---
+
+## 5. Deliver a High-Quality User Experience
+
+Create an application that feels polished, responsive, and intuitive through consistent layouts, meaningful animations, clear navigation, and thoughtful interaction design while remaining fully functional without an internet connection.
+
+---
+
+## 6. Prioritize Reliability and Maintainability
+
+Develop the application with strict TypeScript practices, reusable abstractions, comprehensive documentation, and clean engineering principles to minimize technical debt and simplify future maintenance.
+
+---
+
+## 7. Ensure Performance and Accessibility
+
+Optimize the application for smooth performance across supported devices while meeting modern accessibility standards, including appropriate touch targets, semantic accessibility labels, readable typography, and support for assistive technologies.
+
+---
+
+## 8. Validate Through Comprehensive Testing
+
+Verify the correctness and stability of every major feature through automated testing, manual quality assurance, performance profiling, and end-to-end gameplay validation before release.
+
+---
+
+## 9. Achieve Production Readiness
+
+Prepare the application for production by completing all planned features, resolving critical audit findings, synchronizing documentation, validating release builds, and establishing a maintainable codebase suitable for long-term development.
+
+---
+
+Successful completion of this roadmap signifies that DareDrop has evolved from an architectural scaffold into a production-quality application that satisfies its functional, visual, technical, accessibility, and engineering objectives.
+
+# Guiding Principles
+
+The following principles govern all implementation decisions throughout the DareDrop project. Every feature, component, service, and architectural change should adhere to these guidelines to ensure long-term consistency, maintainability, and production quality.
+
+## 1. Architecture Before Features
+
+Shared architecture, reusable infrastructure, and core systems must be established before implementing user-facing features.
+
+Feature development should build upon stable foundations rather than introducing shortcuts or temporary solutions.
+
+---
+
+## 2. Documentation is the Source of Truth
+
+The project's canonical documentation defines the intended behavior of the application.
+
+Implementation must remain consistent with the documented specifications unless those specifications are intentionally revised.
+
+If implementation and documentation diverge, either the implementation must be corrected or the documentation must be updated immediately.
+
+---
+
+## 3. Single Source of Truth
+
+Every piece of information should have one authoritative location.
+
+Examples include:
+
+- Theme values originate from semantic design tokens.
+- Business rules originate from gameplay services.
+- Application state originates from Zustand stores.
+- Persistent data originates from the storage layer.
+- Shared types originate from the domain model.
+
+Duplicate implementations should be avoided.
+
+---
+
+## 4. Reusability Over Duplication
+
+Common functionality should be abstracted into reusable components, hooks, utilities, or services whenever appropriate.
+
+Reusable solutions reduce maintenance effort, improve consistency, and minimize implementation errors.
+
+---
+
+## 5. Separation of Concerns
+
+Each layer of the application should have a clearly defined responsibility.
+
+- Screens compose the user interface.
+- Components render reusable UI elements.
+- Stores manage application state.
+- Services contain business logic.
+- Utilities provide generic helper functions.
+- Persistence handles data storage.
+- Theme defines visual design.
+
+Layers should not assume responsibilities outside their intended purpose.
+
+---
+
+## 6. Consistency Through Design Tokens
+
+All visual styling should be driven by the semantic design system.
+
+Colors, typography, spacing, elevation, radius, and motion values should never be hardcoded when an equivalent design token exists.
+
+Consistency should always take precedence over isolated visual improvements.
+
+---
+
+## 7. Offline-First by Design
+
+The application should function completely without an internet connection.
+
+Gameplay, bundled content, persistence, and user-created content should remain fully available offline.
+
+Online capabilities, if introduced in future versions, should enhance rather than replace the offline experience.
+
+---
+
+## 8. Accessibility by Default
+
+Accessibility should be considered during implementation rather than after completion.
+
+Interactive elements should provide appropriate touch targets, semantic labels, readable typography, sufficient contrast, and compatibility with assistive technologies.
+
+Accessibility is a core quality requirement, not an optional enhancement.
+
+---
+
+## 9. Performance as a Feature
+
+Performance should be treated as part of the user experience.
+
+The application should prioritize:
+
+- Efficient rendering
+- Minimal unnecessary re-renders
+- Smooth animations
+- Fast startup times
+- Responsive interactions
+- Efficient memory usage
+
+Performance regressions should be addressed as early as possible.
+
+---
+
+## 10. Type Safety Throughout
+
+Strict TypeScript should be maintained across the entire codebase.
+
+Avoid weakening the type system through unnecessary type assertions, unsafe casts, or permissive types when stronger typing is practical.
+
+Compile-time correctness should be preferred over runtime validation whenever possible.
+
+---
+
+## 11. Quality Before Completion
+
+A feature is not considered complete simply because it functions.
+
+Every completed feature should also satisfy:
+
+- Specification compliance
+- Design consistency
+- Accessibility requirements
+- Performance expectations
+- Testing requirements
+- Documentation updates
+
+Completion includes quality, not just functionality.
+
+---
+
+## 12. Continuous Maintainability
+
+Every implementation should make future development easier rather than more difficult.
+
+When multiple solutions are available, preference should be given to the one that improves readability, scalability, testability, and long-term maintenance, even if it requires slightly more initial effort.
+
+---
+
+These guiding principles apply throughout every phase of the roadmap and should be used as the primary decision-making framework whenever implementation trade-offs arise.
+
+# Roadmap phases :- 
+
 # Phase 1 — Foundation Stabilization (Blocking Sprint)
 
 > **Goal:** Stabilize the project foundation before implementing a single production screen. This phase eliminates architectural drift, fixes documentation inaccuracies, aligns the design system with the canonical specification, and builds the minimum platform required for feature development.
@@ -3222,3 +3458,2582 @@ DareDrop is considered production-ready when:
 - Production builds are stable.
 - Complete gameplay can be executed without errors from launch to summary.
 - The application is ready for internal testing or public release.
+
+# Phase 7 — Product Polish, Motion & User Experience
+
+## Objective
+
+Transform DareDrop from a fully functional application into a polished, premium mobile experience.
+
+This phase focuses on refinement rather than feature development. The application should already be feature complete before beginning this phase.
+
+Every interaction, transition, animation, and visual element should contribute to a cohesive, delightful, and intuitive user experience while maintaining excellent performance across supported devices.
+
+---
+
+# 7.1 Motion System
+
+Implement a cohesive application-wide motion language.
+
+All animations should use React Native Reanimated and execute on the UI thread whenever possible.
+
+Animation Categories
+
+- Screen transitions
+- Button interactions
+- Card animations
+- Bottom sheets
+- Dialogs
+- Progress indicators
+- Avatar transitions
+- Loading animations
+- Success animations
+- Celebration animations
+
+Motion should feel smooth, natural, and consistent throughout the application.
+
+---
+
+# 7.2 Animation Guidelines
+
+Standardize animation behavior.
+
+Requirements
+
+- Consistent durations
+- Consistent easing curves
+- Natural acceleration and deceleration
+- No abrupt transitions
+- No blocking animations
+
+Animations should communicate state changes rather than serve as decoration.
+
+---
+
+# 7.3 Screen Transitions
+
+Refine navigation transitions.
+
+Review
+
+- Push navigation
+- Pop navigation
+- Modal presentation
+- Bottom sheet presentation
+- Dialog appearance
+- Summary transition
+
+Transitions should reinforce the application's Warm Material design language.
+
+---
+
+# 7.4 Micro-Interactions
+
+Enhance user feedback.
+
+Implement
+
+- Button press animations
+- Chip selection feedback
+- Card elevation changes
+- Toggle animations
+- Input focus animations
+- Avatar selection feedback
+- Difficulty selector animations
+
+Interactions should feel immediate and responsive.
+
+---
+
+# 7.5 Haptic Feedback
+
+Integrate contextual haptics.
+
+Examples
+
+- Button confirmation
+- Successful actions
+- Skip confirmation
+- Pass confirmation
+- Game completion
+- Award presentation
+
+Allow users to disable haptics through Settings.
+
+---
+
+# 7.6 Sound Effects
+
+Implement lightweight sound effects.
+
+Examples
+
+- Button taps
+- Card reveal
+- Successful dare completion
+- Game completion
+- Celebration
+
+Requirements
+
+- Subtle
+- Non-intrusive
+- Optional
+
+Respect the user's sound preference.
+
+---
+
+# 7.7 Loading Experiences
+
+Replace static loading indicators with polished experiences.
+
+Examples
+
+- App startup
+- Session restoration
+- Pack loading
+- Statistics generation
+
+Avoid blank screens and abrupt loading transitions.
+
+---
+
+# 7.8 Empty States
+
+Design meaningful empty states.
+
+Examples
+
+- No players
+- No custom dares
+- No history
+- No search results
+- No active session
+
+Each empty state should explain the situation and guide the user toward the next action.
+
+---
+
+# 7.9 Error States
+
+Improve error presentation.
+
+Requirements
+
+- Friendly messaging
+- Actionable recovery steps
+- Retry actions
+- Consistent visual style
+
+Never expose raw technical details.
+
+---
+
+# 7.10 Success States
+
+Celebrate user accomplishments.
+
+Examples
+
+- Dare completed
+- Game finished
+- Award earned
+- Custom dare added
+
+Feedback should reinforce positive interaction without becoming distracting.
+
+---
+
+# 7.11 Visual Hierarchy
+
+Review every screen.
+
+Verify
+
+- Primary actions stand out.
+- Secondary actions remain discoverable.
+- Typography hierarchy is consistent.
+- Cards align correctly.
+- Spacing follows design tokens.
+
+Every screen should feel balanced and uncluttered.
+
+---
+
+# 7.12 Layout Consistency
+
+Review layout across the application.
+
+Verify
+
+- Consistent margins
+- Consistent padding
+- Card spacing
+- Section spacing
+- Header alignment
+- Bottom action placement
+
+No screen should introduce inconsistent spacing patterns.
+
+---
+
+# 7.13 Responsive Design
+
+Optimize layouts for different devices.
+
+Support
+
+- Small phones
+- Large phones
+- Tablets
+- Landscape orientation
+
+Prevent clipping, overflow, and excessive whitespace.
+
+Respect safe areas on all devices.
+
+---
+
+# 7.14 Keyboard Experience
+
+Improve form interactions.
+
+Requirements
+
+- Keyboard avoidance
+- Automatic scrolling
+- Focus management
+- Return key navigation
+
+Input fields should never be obscured by the keyboard.
+
+---
+
+# 7.15 Touch Experience
+
+Ensure all interactions feel reliable.
+
+Verify
+
+- Touch targets meet accessibility guidelines.
+- Hit slop is applied where appropriate.
+- Buttons respond immediately.
+- Gestures are predictable.
+
+Avoid accidental interactions.
+
+---
+
+# 7.16 Gesture Refinement
+
+Review gesture behavior.
+
+Examples
+
+- Bottom sheet drag
+- Swipe dismissal
+- Scroll interactions
+
+Gestures should never conflict with navigation.
+
+---
+
+# 7.17 Progress Feedback
+
+Improve visibility of user progress.
+
+Examples
+
+- Current round
+- Remaining rounds
+- Skip usage
+- Session progress
+
+Progress indicators should update smoothly.
+
+---
+
+# 7.18 Celebration Experience
+
+Design a memorable game completion.
+
+Implement
+
+- Confetti animation
+- Award presentation
+- Statistics reveal
+- Smooth transitions
+
+The end of a session should feel rewarding and satisfying.
+
+---
+
+# 7.19 Accessibility Motion
+
+Respect accessibility preferences.
+
+Requirements
+
+- Reduce Motion support
+- Disable non-essential animations
+- Preserve usability
+
+Animations should never become a barrier to interaction.
+
+---
+
+# 7.20 Performance Validation
+
+Ensure polish does not impact performance.
+
+Review
+
+- Animation frame rate
+- Memory usage
+- Render frequency
+- Interaction latency
+
+Target
+
+- Consistent 60 FPS
+- Minimal dropped frames
+
+---
+
+# 7.21 Cross-Screen Consistency
+
+Perform a complete UX review.
+
+Verify
+
+- Color usage
+- Elevation
+- Motion
+- Typography
+- Iconography
+- Button hierarchy
+- Interaction feedback
+
+The application should feel like a single cohesive product.
+
+---
+
+# 7.22 User Experience Walkthrough
+
+Execute complete user journeys.
+
+Examples
+
+New User
+
+Launch
+
+↓
+
+Create Players
+
+↓
+
+Configure Game
+
+↓
+
+Play
+
+↓
+
+Summary
+
+Returning User
+
+Launch
+
+↓
+
+Resume Session
+
+↓
+
+Continue Playing
+
+↓
+
+Finish Game
+
+Custom Content
+
+Launch
+
+↓
+
+Manage Dares
+
+↓
+
+Create Pack
+
+↓
+
+Start Game
+
+Each journey should feel intuitive from start to finish.
+
+---
+
+# 7.23 UX Review Checklist
+
+Before moving to Phase 8, verify
+
+- No abrupt animations
+- No inconsistent spacing
+- No layout shifts
+- No visual glitches
+- No interaction delays
+- Smooth navigation
+- Consistent feedback
+- Premium overall feel
+
+---
+
+# Exit Criteria
+
+Before moving to Phase 8:
+
+- Motion system is fully implemented.
+- Animations execute smoothly on supported devices.
+- Haptics and sounds are integrated.
+- Responsive layouts are verified.
+- Empty, loading, error, and success states are polished.
+- Keyboard and touch interactions feel natural.
+- Accessibility motion preferences are respected.
+- The complete application delivers a cohesive, premium user experience consistent with the Warm Material design language.
+
+# Phase 8 — Quality Assurance, Testing & Engineering Validation
+
+## Objective
+
+Validate the entire DareDrop application through comprehensive testing, accessibility verification, performance analysis, and engineering quality assurance.
+
+This phase focuses on identifying and eliminating defects before release. No new features should be introduced during this phase unless they are required to resolve production-critical issues.
+
+Every layer of the application must be verified, from UI components to business logic and persistence.
+
+---
+
+# 8.1 Testing Infrastructure
+
+Establish a robust automated testing environment.
+
+Configure
+
+- Jest
+- React Native Testing Library
+- Mock Service utilities
+- Test helpers
+- Shared fixtures
+- Coverage reporting
+
+Project structure
+
+```
+tests/
+│
+├── components/
+├── stores/
+├── services/
+├── navigation/
+├── integration/
+├── utilities/
+└── fixtures/
+```
+
+Testing should be integrated into the development workflow.
+
+---
+
+# 8.2 Unit Testing
+
+Test every isolated module.
+
+Coverage Areas
+
+Components
+
+- Buttons
+- Cards
+- Inputs
+- Chips
+- Switches
+- Avatars
+- Dialogs
+- Bottom Sheets
+
+Utilities
+
+- Helpers
+- Validators
+- Formatters
+
+Stores
+
+- Settings
+- Players
+- Game Session
+- Custom Content
+
+Services
+
+- Game Engine
+- Statistics
+- Awards
+- History
+- Persistence
+- Dare Selection
+- Validation
+
+Every public function should have deterministic unit tests.
+
+---
+
+# 8.3 Integration Testing
+
+Verify interactions between modules.
+
+Scenarios
+
+- Store ↔ Services
+- Services ↔ Storage
+- Screens ↔ Stores
+- Navigation ↔ State
+- Session Restoration
+
+Ensure modules communicate correctly without relying on implementation details.
+
+---
+
+# 8.4 End-to-End Gameplay Testing
+
+Validate the complete gameplay experience.
+
+Primary Scenario
+
+Launch
+
+↓
+
+Create Players
+
+↓
+
+Configure Game
+
+↓
+
+Play All Rounds
+
+↓
+
+Complete Summary
+
+↓
+
+Start New Game
+
+Additional Scenarios
+
+- Skip Flow
+- Pass Flow
+- Resume Session
+- Custom Dares
+- Maximum Players
+- Minimum Players
+- Empty Pack Handling
+
+The complete gameplay loop must execute without errors.
+
+---
+
+# 8.5 Edge Case Testing
+
+Stress unusual conditions.
+
+Examples
+
+- One remaining dare
+- Skip limit reached
+- Empty custom packs
+- Duplicate player names
+- Very long player names
+- Invalid settings
+- Large history
+- Maximum rounds
+- Maximum players
+
+The application should remain stable in every supported scenario.
+
+---
+
+# 8.6 Persistence Testing
+
+Validate storage reliability.
+
+Verify
+
+- Session restoration
+- App restart
+- Force close
+- Device reboot
+- Migration
+- Data integrity
+
+No user progress should be lost during expected usage.
+
+---
+
+# 8.7 Randomization Testing
+
+Verify gameplay fairness.
+
+Review
+
+- Player rotation
+- Dare selection
+- Difficulty filtering
+- Pack distribution
+
+Ensure
+
+- No repeated dares
+- No skipped players
+- Uniform random selection
+- Correct filtering
+
+Randomness should remain deterministic where required.
+
+---
+
+# 8.8 Statistics Validation
+
+Verify statistical accuracy.
+
+Cross-check
+
+- Completed dares
+- Skipped dares
+- Passed turns
+- Completion percentage
+- Session duration
+- Player rankings
+
+Statistics should always match gameplay history.
+
+---
+
+# 8.9 Award Validation
+
+Verify award calculations.
+
+Test
+
+- Single winner
+- Multiple winners
+- Tie handling
+- No qualifying players
+
+Awards should remain deterministic and reproducible.
+
+---
+
+# 8.10 Accessibility Testing
+
+Perform a comprehensive accessibility audit.
+
+Verify
+
+- Screen reader labels
+- Accessibility roles
+- Accessibility hints
+- Focus order
+- Focus trapping
+- Dynamic font scaling
+- High contrast
+- Touch target size
+
+Test using
+
+- VoiceOver
+- TalkBack
+
+Every primary workflow should be fully accessible.
+
+---
+
+# 8.11 Responsive Testing
+
+Verify layouts across devices.
+
+Devices
+
+- Small phones
+- Large phones
+- Tablets
+
+Orientations
+
+- Portrait
+- Landscape
+
+Verify
+
+- Layout
+- Navigation
+- Modals
+- Bottom Sheets
+- Keyboard interactions
+
+No clipping or overflow should occur.
+
+---
+
+# 8.12 Performance Profiling
+
+Measure application performance.
+
+Review
+
+- Startup time
+- Render frequency
+- Memory usage
+- CPU usage
+- JavaScript thread utilization
+- Animation frame rate
+
+Identify and resolve bottlenecks.
+
+---
+
+# 8.13 Bundle Analysis
+
+Review production bundle.
+
+Tasks
+
+- Identify unused code
+- Remove dead dependencies
+- Analyze bundle size
+- Optimize assets
+
+Reduce application size wherever practical.
+
+---
+
+# 8.14 Error Recovery Testing
+
+Intentionally trigger failures.
+
+Examples
+
+- Corrupted storage
+- Invalid session
+- Missing data
+- Failed migration
+- Unexpected exceptions
+
+Verify graceful recovery.
+
+The application should never crash unexpectedly.
+
+---
+
+# 8.15 Security Review
+
+Review defensive programming practices.
+
+Verify
+
+- Input validation
+- Safe persistence
+- Data sanitization
+- Error boundaries
+- Safe defaults
+
+Even offline applications should follow secure coding practices.
+
+---
+
+# 8.16 Code Quality Review
+
+Perform a repository-wide engineering review.
+
+Verify
+
+- No duplicated code
+- No dead code
+- No unused imports
+- No commented-out code
+- No TODO comments
+- No console statements
+
+Maintain strict TypeScript compliance.
+
+---
+
+# 8.17 Documentation Validation
+
+Verify documentation accuracy.
+
+Review
+
+- README
+- PROJECT_CONTEXT.md
+- GAME_RULES.md
+- DATA_MODEL.md
+- CURRENT_STATE.md
+- SCREEN_SPECIFICATIONS.md
+- UI_SPECIFICATION.md
+
+Documentation should accurately describe the implemented application.
+
+---
+
+# 8.18 Dependency Review
+
+Audit project dependencies.
+
+Tasks
+
+- Remove unused packages
+- Update outdated packages
+- Resolve security advisories
+- Verify Expo SDK compatibility
+
+Every dependency should have a clear purpose.
+
+---
+
+# 8.19 Regression Testing
+
+Verify existing functionality after fixes.
+
+Regression Areas
+
+- Navigation
+- Gameplay
+- Persistence
+- Settings
+- Custom Dares
+- History
+- Summary
+
+Bug fixes must not introduce new issues.
+
+---
+
+# 8.20 Manual QA Checklist
+
+Execute a structured manual review.
+
+Verify
+
+- Every screen
+- Every button
+- Every gesture
+- Every animation
+- Every dialog
+- Every bottom sheet
+- Every navigation path
+- Every validation message
+
+No broken user flow should remain.
+
+---
+
+# 8.21 Engineering Audit
+
+Perform a complete engineering review.
+
+Review
+
+- Architecture
+- State Management
+- Services
+- Components
+- Navigation
+- Theme
+- Performance
+- Accessibility
+- Documentation
+
+Resolve any remaining inconsistencies before release.
+
+---
+
+# 8.22 Final Quality Gate
+
+The application must satisfy all release criteria.
+
+Requirements
+
+- Zero TypeScript errors
+- Zero ESLint errors
+- Zero runtime warnings
+- No critical defects
+- No unresolved high-priority bugs
+- Stable production builds
+- Reliable persistence
+- Verified accessibility
+- Complete gameplay validation
+
+Only after passing this quality gate should the project proceed to release preparation.
+
+---
+
+# Exit Criteria
+
+Before moving to Phase 9:
+
+- Automated testing infrastructure is fully operational.
+- Critical business logic is covered by unit and integration tests.
+- Complete gameplay flow has been validated.
+- Accessibility requirements are satisfied.
+- Responsive layouts are verified.
+- Performance meets target expectations.
+- Documentation accurately reflects the implementation.
+- No critical or high-severity defects remain.
+- The application is considered production-stable and ready for release preparation.
+
+# Phase 9 — Release Engineering, Deployment & Long-Term Maintenance
+
+## Objective
+
+Prepare DareDrop for production release by finalizing build configuration, deployment assets, documentation, repository hygiene, and long-term maintainability.
+
+This phase represents the final engineering gate before release.
+
+No new features should be introduced during this phase. Only release-blocking defects and documentation inaccuracies may be addressed.
+
+---
+
+# 9.1 Production Build Configuration
+
+Prepare production builds for all supported platforms.
+
+Verify
+
+- Android APK
+- Android AAB
+- iOS Release Build
+
+Ensure
+
+- Production environment variables
+- Correct application identifiers
+- Build numbers
+- Version numbers
+- Release configuration
+
+Development-only configuration must not be included in production builds.
+
+---
+
+# 9.2 Application Metadata
+
+Complete application metadata.
+
+Verify
+
+- Application name
+- Display name
+- Package identifier
+- Bundle identifier
+- Version
+- Build number
+- Orientation
+- Supported platforms
+
+Metadata should remain consistent across every platform.
+
+---
+
+# 9.3 Branding Assets
+
+Finalize production assets.
+
+Review
+
+- App icon
+- Adaptive icon
+- Splash screen
+- Favicon
+- Notification icon
+- Store screenshots
+- Promotional graphics
+
+All assets should follow the Warm Material design language.
+
+---
+
+# 9.4 Repository Cleanup
+
+Perform a complete repository cleanup.
+
+Remove
+
+- Dead code
+- Duplicate files
+- Obsolete utilities
+- Temporary assets
+- Debug helpers
+- Experimental code
+
+Ensure a clean and maintainable repository structure.
+
+---
+
+# 9.5 Dependency Cleanup
+
+Review every dependency.
+
+Tasks
+
+- Remove unused packages
+- Update outdated dependencies
+- Resolve security advisories
+- Verify Expo SDK compatibility
+
+Every dependency should have a documented purpose.
+
+---
+
+# 9.6 Documentation Finalization
+
+Synchronize all documentation with the implementation.
+
+Review
+
+- README.md
+- PROJECT_CONTEXT.md
+- UI_SPECIFICATION.md
+- SCREEN_SPECIFICATIONS.md
+- COMPONENT_GUIDELINES.md
+- DATA_MODEL.md
+- GAME_RULES.md
+- CURRENT_STATE.md
+- ROADMAP.md
+
+Documentation should accurately represent the current state of the project.
+
+No outdated or contradictory information should remain.
+
+---
+
+# 9.7 Release Notes
+
+Prepare release documentation.
+
+Include
+
+- New features
+- Improvements
+- Bug fixes
+- Known limitations
+- Upgrade notes
+
+Maintain a structured changelog for future releases.
+
+---
+
+# 9.8 Versioning Strategy
+
+Establish version management.
+
+Define
+
+- Semantic Versioning (SemVer)
+- Release naming
+- Version increment policy
+
+Example
+
+Major.Minor.Patch
+
+```
+1.0.0
+```
+
+Future releases should follow the same strategy consistently.
+
+---
+
+# 9.9 Production Checklist
+
+Create a final release checklist.
+
+Verify
+
+- All roadmap phases completed
+- Documentation updated
+- Production assets finalized
+- Version numbers updated
+- No critical defects
+- No unresolved high-priority issues
+- Accessibility verified
+- Performance verified
+- Testing completed
+
+Every checklist item must be confirmed before release.
+
+---
+
+# 9.10 Final Repository Audit
+
+Conduct a repository-wide review.
+
+Review
+
+- Folder structure
+- Naming consistency
+- Theme usage
+- Component organization
+- Store architecture
+- Service architecture
+- Documentation
+- Build configuration
+
+The repository should be clean, consistent, and easy to maintain.
+
+---
+
+# 9.11 Technical Debt Review
+
+Identify any remaining technical debt.
+
+Classify
+
+- Low Priority
+- Medium Priority
+- High Priority
+
+Document
+
+- Description
+- Impact
+- Proposed solution
+- Future milestone
+
+Technical debt should be intentional and documented.
+
+---
+
+# 9.12 Future Roadmap
+
+Document planned enhancements.
+
+Potential areas
+
+- Additional game modes
+- Localization
+- Dark Mode
+- Cloud Backup
+- Online Multiplayer
+- AI-generated Dares
+- Community Packs
+- Premium Content
+- Achievement System
+
+Separate future ideas from the completed production scope.
+
+---
+
+# 9.13 Internal Release Candidate
+
+Prepare an internal release candidate.
+
+Verify
+
+- Installation
+- Startup
+- Gameplay
+- Session persistence
+- Settings
+- History
+- Summary
+- Custom Dares
+
+The release candidate should behave identically to the development build.
+
+---
+
+# 9.14 Production Smoke Test
+
+Execute one final end-to-end validation.
+
+Workflow
+
+Launch Application
+
+↓
+
+Create Players
+
+↓
+
+Configure Game
+
+↓
+
+Play Complete Session
+
+↓
+
+Use Skip
+
+↓
+
+Use Pass
+
+↓
+
+Complete Game
+
+↓
+
+Review Summary
+
+↓
+
+Review History
+
+↓
+
+Restart Game
+
+↓
+
+Close Application
+
+↓
+
+Reopen Application
+
+↓
+
+Resume Session
+
+↓
+
+Reset Data
+
+↓
+
+Launch Again
+
+Every workflow should complete successfully without crashes or unexpected behavior.
+
+---
+
+# 9.15 Post-Release Preparation
+
+Prepare the project for long-term maintenance.
+
+Establish
+
+- Bug reporting process
+- Issue templates
+- Pull request templates
+- Contribution guidelines
+- Coding standards
+- Repository labels
+
+The repository should be ready for future contributors.
+
+---
+
+# 9.16 Final Production Audit
+
+Conduct one comprehensive production audit.
+
+Review
+
+- Architecture
+- Design System
+- Components
+- Navigation
+- State Management
+- Services
+- Persistence
+- Gameplay
+- Performance
+- Accessibility
+- Documentation
+- Testing
+- Build Configuration
+
+Confirm that all critical findings from previous audits have been resolved.
+
+---
+
+# 9.17 Release Approval
+
+The project is considered production-ready only when all of the following are satisfied:
+
+- All roadmap phases are complete.
+- All critical and high-priority audit findings are resolved.
+- Documentation accurately reflects the implementation.
+- Production builds are stable.
+- Accessibility requirements are satisfied.
+- Performance targets are achieved.
+- Automated and manual testing are complete.
+- Repository hygiene is verified.
+- No known release-blocking defects remain.
+
+Formal release approval should occur only after every requirement has been validated.
+
+---
+
+# Completion Criteria
+
+DareDrop is considered production-ready when:
+
+- The complete gameplay experience functions reliably from launch to summary.
+- The application meets all functional, visual, accessibility, and performance requirements.
+- Documentation is complete and accurate.
+- The repository is clean, maintainable, and well-organized.
+- Production builds are verified on supported platforms.
+- All audit findings have been addressed or intentionally documented.
+- The project is ready for public release, portfolio presentation, or long-term maintenance.
+
+# Appendix A — Project Milestones
+
+The following milestones define the major implementation checkpoints throughout the DareDrop development lifecycle. Each milestone represents the successful completion of one or more roadmap phases and establishes a quality gate before development progresses to the next stage.
+
+A milestone should only be considered complete when all associated deliverables satisfy the project's Definition of Done (Appendix B).
+
+---
+
+## Milestone 1 — Foundation Complete
+
+**Associated Phase**
+
+- Phase 1 — Foundation & Specification Alignment
+
+**Objectives**
+
+- Canonical documentation reconciled and synchronized.
+- Theme tokens aligned with project specifications.
+- Design system inconsistencies resolved.
+- Core reusable components completed.
+- Project architecture finalized.
+- Technical debt from pre-alpha foundation removed.
+
+**Exit Criteria**
+
+- Documentation accurately reflects implementation.
+- Theme tokens are the single source of truth.
+- Core UI component library is production-ready.
+- No known architectural inconsistencies remain.
+
+---
+
+## Milestone 2 — Core Architecture Complete
+
+**Associated Phase**
+
+- Phase 2 — Core Architecture & Domain Layer
+
+**Objectives**
+
+- Domain models implemented.
+- Zustand stores established.
+- Service layer completed.
+- Persistence infrastructure operational.
+- Bundled content integrated.
+- Business logic centralized.
+
+**Exit Criteria**
+
+- Complete application architecture is operational.
+- State management fully functional.
+- Persistent storage validated.
+- Core gameplay systems can be built without architectural changes.
+
+---
+
+## Milestone 3 — Design System Complete
+
+**Associated Phase**
+
+- Phase 3 — Design System & Shared Infrastructure
+
+**Objectives**
+
+- Shared UI library finalized.
+- Navigation infrastructure established.
+- Accessibility baseline implemented.
+- Animation infrastructure completed.
+- Shared utilities and hooks finalized.
+
+**Exit Criteria**
+
+- All screens can be built entirely from reusable infrastructure.
+- Design consistency is enforced through shared components.
+- Accessibility baseline verified.
+
+---
+
+## Milestone 4 — MVP Complete
+
+**Associated Phases**
+
+- Phase 4 — Navigation & Screen Implementation
+- Phase 5 — Gameplay Systems
+
+**Objectives**
+
+- Complete user journey implemented.
+- Navigation flow finalized.
+- Gameplay loop operational.
+- Session progression functioning.
+- Summary generation complete.
+
+**Exit Criteria**
+
+- Users can complete a full game session from start to finish.
+- All primary gameplay features are functional.
+- No critical blockers remain for normal gameplay.
+
+---
+
+## Milestone 5 — Feature Complete
+
+**Associated Phase**
+
+- Phase 6 — Supporting Features
+
+**Objectives**
+
+- Custom dare management implemented.
+- Settings completed.
+- History tracking operational.
+- Statistics generated correctly.
+- Awards system finalized.
+- Session recovery validated.
+
+**Exit Criteria**
+
+- All planned v1 features implemented.
+- No documented functional requirements remain incomplete.
+- Feature set matches the project specifications.
+
+---
+
+## Milestone 6 — Release Candidate
+
+**Associated Phases**
+
+- Phase 7 — Polish & User Experience
+- Phase 8 — Quality Assurance & Testing
+
+**Objectives**
+
+- UI polish completed.
+- Motion system refined.
+- Accessibility verified.
+- Performance optimized.
+- Automated tests passing.
+- Documentation synchronized.
+
+**Exit Criteria**
+
+- No critical or high-severity defects remain.
+- Performance targets achieved.
+- Accessibility requirements satisfied.
+- Application is stable for release validation.
+
+---
+
+## Milestone 7 — Production Release
+
+**Associated Phase**
+
+- Phase 9 — Release Engineering
+
+**Objectives**
+
+- Production builds validated.
+- Final documentation completed.
+- Release checklist satisfied.
+- Repository prepared for long-term maintenance.
+
+**Exit Criteria**
+
+- Production build generated successfully.
+- Final engineering audit passed.
+- Documentation reflects released implementation.
+- Application approved for public release.
+
+---
+
+## Milestone Progression
+
+Development should proceed sequentially through these milestones. A milestone should not be considered complete until every associated roadmap phase has satisfied its Definition of Done and all critical issues identified during review have been resolved.
+
+Progression to the next milestone should represent an increase in implementation maturity rather than simply the completion of additional features.
+
+# Appendix B — Definition of Done
+
+A task, feature, component, or roadmap phase is considered complete only when it satisfies all applicable criteria defined below.
+
+Completion is determined by quality, correctness, maintainability, and compliance with the project specifications—not merely by functional implementation.
+
+---
+
+## 1. Functional Completion
+
+The implementation must:
+
+- Satisfy all documented functional requirements.
+- Behave according to the project specifications.
+- Handle expected user interactions correctly.
+- Handle invalid input gracefully.
+- Handle edge cases without failure.
+- Produce consistent and predictable results.
+
+No known functional defects should remain.
+
+---
+
+## 2. Specification Compliance
+
+The implementation must be consistent with the project's canonical documentation, including:
+
+- PROJECT_CONTEXT.md
+- UI_SPECIFICATION.md
+- COMPONENT_GUIDELINES.md
+- SCREEN_SPECIFICATIONS.md
+- DATA_MODEL.md
+- GAME_RULES.md
+
+Any intentional deviation must be documented and approved before implementation is considered complete.
+
+---
+
+## 3. Code Quality
+
+The implementation must:
+
+- Compile without TypeScript errors.
+- Pass ESLint without warnings or errors.
+- Follow the project's coding standards.
+- Avoid duplicate logic.
+- Avoid dead code.
+- Avoid unnecessary complexity.
+- Maintain clear naming conventions.
+- Contain no placeholder implementations.
+
+The following should not exist in production code:
+
+- TODO comments
+- FIXME comments
+- Temporary hacks
+- Debug-only logic
+- Console logging
+- Unused imports
+- Unused variables
+
+---
+
+## 4. Architecture Compliance
+
+The implementation must respect the project's architecture.
+
+Specifically:
+
+- Screens compose UI.
+- Components remain reusable.
+- Stores manage application state.
+- Services contain business logic.
+- Utilities remain generic.
+- Persistence is isolated.
+- Theme tokens control styling.
+
+No architectural boundaries should be violated.
+
+---
+
+## 5. Design System Compliance
+
+All visual implementation must use the semantic design system.
+
+This includes:
+
+- Colors
+- Typography
+- Spacing
+- Radius
+- Elevation
+- Motion
+- Icons
+
+Hardcoded visual values should only exist when explicitly documented and justified.
+
+---
+
+## 6. Accessibility
+
+Every user-facing implementation must include:
+
+- Appropriate accessibility labels.
+- Correct accessibility roles.
+- Minimum touch target sizes.
+- Readable typography.
+- Sufficient color contrast.
+- Keyboard and screen-reader compatibility where applicable.
+
+Accessibility regressions should be treated as defects.
+
+---
+
+## 7. Performance
+
+The implementation should:
+
+- Avoid unnecessary re-renders.
+- Use memoization appropriately.
+- Keep animations smooth.
+- Minimize expensive computations.
+- Avoid blocking the UI thread.
+- Maintain responsive interactions.
+
+Performance should be considered part of feature quality rather than post-development optimization.
+
+---
+
+## 8. Error Handling
+
+All expected failure scenarios must be handled gracefully.
+
+Examples include:
+
+- Invalid input
+- Missing data
+- Corrupted storage
+- Empty states
+- Permission failures
+- Unexpected runtime exceptions
+
+Users should receive clear and recoverable feedback whenever possible.
+
+---
+
+## 9. Testing
+
+The implementation must be verified through appropriate testing.
+
+Depending on the feature, this includes:
+
+- Unit testing
+- Integration testing
+- Component testing
+- Manual verification
+- End-to-end validation
+
+All applicable tests should pass before completion.
+
+---
+
+## 10. Documentation
+
+Relevant documentation must be updated whenever implementation changes affect:
+
+- Features
+- Architecture
+- Data models
+- Gameplay rules
+- Component APIs
+- Navigation
+- Configuration
+
+Documentation should accurately represent the current implementation.
+
+---
+
+## 11. Production Readiness
+
+Before completion, the implementation must be reviewed for:
+
+- Maintainability
+- Readability
+- Scalability
+- Security
+- Consistency
+- Technical debt
+
+Known issues should be documented and prioritized appropriately.
+
+---
+
+## 12. Final Verification Checklist
+
+Before marking any work as complete, verify that:
+
+- [ ] Functional requirements are fully implemented.
+- [ ] Project specifications are satisfied.
+- [ ] TypeScript passes without errors.
+- [ ] ESLint passes without warnings.
+- [ ] Architecture boundaries are respected.
+- [ ] Design tokens are used consistently.
+- [ ] Accessibility requirements are satisfied.
+- [ ] Performance expectations are met.
+- [ ] Error handling is implemented.
+- [ ] Appropriate tests have passed.
+- [ ] Documentation has been updated.
+- [ ] No critical or high-severity defects remain.
+
+---
+
+Only when all applicable criteria have been satisfied should a task, feature, milestone, or roadmap phase be considered complete.
+
+# Appendix C — Quality Gates
+
+Quality Gates define the minimum requirements that must be satisfied before progressing from one roadmap phase to the next.
+
+Unlike milestones, which represent major project achievements, Quality Gates act as engineering checkpoints that ensure the project remains stable, maintainable, and aligned with the product vision throughout development.
+
+A phase should not be marked as complete, nor should the next phase begin, until all applicable gate requirements have been satisfied.
+
+---
+
+# Gate 1 — Foundation Approval
+
+**Applies after Phase 1**
+
+## Requirements
+
+- All canonical documentation has been reviewed and synchronized.
+- Theme tokens fully match the project specifications.
+- Design system inconsistencies have been resolved.
+- Duplicate modules have been removed.
+- Core reusable components are production-ready.
+- Documentation accurately reflects the implementation.
+- No critical foundation defects remain.
+
+**Expected Outcome**
+
+The project has a stable and consistent foundation suitable for implementing application architecture.
+
+---
+
+# Gate 2 — Architecture Approval
+
+**Applies after Phase 2**
+
+## Requirements
+
+- Domain models have been implemented.
+- Zustand stores are operational.
+- Service layer is complete.
+- AsyncStorage integration is functional.
+- Repository data layer is operational.
+- Bundled dare packs load correctly.
+- Core business logic has unit test coverage.
+
+**Expected Outcome**
+
+The application architecture is complete and capable of supporting all planned features without structural modifications.
+
+---
+
+# Gate 3 — Infrastructure Approval
+
+**Applies after Phase 3**
+
+## Requirements
+
+- Shared component library is complete.
+- Navigation infrastructure is functional.
+- Shared hooks and utilities are implemented.
+- Accessibility baseline is established.
+- Motion infrastructure is operational.
+- No duplicate UI logic exists.
+
+**Expected Outcome**
+
+Screens can now be implemented entirely using shared infrastructure.
+
+---
+
+# Gate 4 — MVP Approval
+
+**Applies after Phases 4 and 5**
+
+## Requirements
+
+- Complete user flow is operational.
+- Gameplay loop functions correctly.
+- Navigation behaves as documented.
+- Session progression works correctly.
+- Summary generation is accurate.
+- No critical gameplay defects remain.
+- Manual gameplay verification has passed.
+
+**Expected Outcome**
+
+The application is functionally complete as a playable Minimum Viable Product.
+
+---
+
+# Gate 5 — Feature Completion Approval
+
+**Applies after Phase 6**
+
+## Requirements
+
+- All planned v1 features have been implemented.
+- Custom dares function correctly.
+- History and statistics are accurate.
+- Settings persist correctly.
+- Session recovery functions correctly.
+- No documented features remain incomplete.
+
+**Expected Outcome**
+
+The application has achieved complete feature parity with the project specifications.
+
+---
+
+# Gate 6 — Release Candidate Approval
+
+**Applies after Phases 7 and 8**
+
+## Requirements
+
+- Accessibility audit completed.
+- Performance targets achieved.
+- Automated tests pass successfully.
+- Manual regression testing completed.
+- Documentation synchronized.
+- No Critical or High severity issues remain.
+- Production builds succeed.
+
+**Expected Outcome**
+
+The application is considered stable enough to become a Release Candidate.
+
+---
+
+# Gate 7 — Production Approval
+
+**Applies after Phase 9**
+
+## Requirements
+
+- Final engineering audit completed.
+- Production APK/AAB generated successfully.
+- Release notes finalized.
+- Version information updated.
+- Repository cleaned and tagged.
+- All roadmap phases completed.
+- All milestone exit criteria satisfied.
+
+**Expected Outcome**
+
+The project is approved for production release and long-term maintenance.
+
+---
+
+# Gate Failure Policy
+
+If any Quality Gate fails:
+
+- Development should pause before beginning the next roadmap phase.
+- The failed requirements should be addressed before continuing.
+- Temporary workarounds should not replace proper implementation.
+- Any approved exceptions must be documented along with their rationale.
+
+Skipping Quality Gates increases technical debt and significantly raises the risk of architecture drift, inconsistent implementation, and production defects.
+
+---
+
+# Continuous Verification
+
+Quality Gates are cumulative.
+
+Passing a later gate assumes that all previous gates continue to remain satisfied. If regressions are introduced during later development phases, the project should be considered to have failed the affected Quality Gate until the issues have been resolved.
+
+Quality Gates are intended to preserve long-term code quality, architectural consistency, and production readiness throughout the entire DareDrop development lifecycle.
+
+# Appendix D — Risk Register
+
+This Risk Register identifies known project risks, their potential impact, likelihood, mitigation strategies, and ownership expectations throughout the DareDrop development lifecycle.
+
+The register should be reviewed at the end of every roadmap phase and updated whenever new risks are discovered.
+
+---
+
+# Risk Classification
+
+| Level | Description |
+|--------|-------------|
+| Critical | Blocks production readiness or core functionality. |
+| High | Major impact on quality, architecture, or user experience. |
+| Medium | Noticeable impact but manageable without significant rework. |
+| Low | Minor issue with limited impact. |
+
+---
+
+# Risk Categories
+
+Project risks are grouped into the following categories:
+
+- Architecture
+- Code Quality
+- Design System
+- Gameplay
+- User Experience
+- Accessibility
+- Performance
+- Testing
+- Documentation
+- Technical Debt
+- Release Management
+
+---
+
+# Active Risk Register
+
+| ID | Category | Risk | Severity | Likelihood | Mitigation |
+|----|----------|------|----------|------------|------------|
+| R-001 | Architecture | Documentation and implementation diverge over time. | High | Medium | Update documentation immediately after structural changes. |
+| R-002 | Design System | Theme tokens drift from canonical specifications. | Critical | Medium | Maintain a single source of truth for all design tokens. |
+| R-003 | Architecture | Shared components become screen-specific over time. | High | Medium | Enforce component reusability during reviews. |
+| R-004 | Gameplay | Gameplay rules become inconsistent with GAME_RULES.md. | Critical | Low | Keep gameplay logic synchronized with documented rules. |
+| R-005 | State Management | Business logic leaks into UI components. | High | Medium | Restrict business logic to services and stores. |
+| R-006 | Performance | Unnecessary re-renders reduce UI responsiveness. | Medium | Medium | Use memoization and performance profiling where appropriate. |
+| R-007 | Accessibility | Accessibility regressions introduced during UI development. | High | Medium | Audit accessibility throughout development rather than only before release. |
+| R-008 | Testing | Low test coverage allows regressions into production. | High | Medium | Introduce automated testing early and expand incrementally. |
+| R-009 | Documentation | Project documentation becomes outdated. | High | High | Treat documentation updates as part of the Definition of Done. |
+| R-010 | Technical Debt | Temporary workarounds become permanent solutions. | High | Medium | Eliminate shortcuts before closing each roadmap phase. |
+| R-011 | Persistence | Data schema changes break existing stored sessions. | High | Low | Implement schema versioning and migration support. |
+| R-012 | Release | Production build failures discovered late. | Medium | Low | Validate release builds throughout development, not only at the end. |
+
+---
+
+# Risk Monitoring
+
+The following questions should be reviewed at the end of every roadmap phase:
+
+- Has any new architectural risk been introduced?
+- Have any completed tasks increased technical debt?
+- Has documentation remained synchronized with implementation?
+- Are performance characteristics still acceptable?
+- Has accessibility been maintained?
+- Have new dependencies increased project complexity?
+- Has any feature introduced unnecessary coupling?
+- Have existing risks increased in severity?
+
+---
+
+# Risk Response Strategy
+
+Each identified risk should have one of the following responses:
+
+## Avoid
+
+Modify implementation to eliminate the risk entirely.
+
+Examples:
+
+- Removing duplicate modules.
+- Refactoring tightly coupled code.
+- Correcting architecture violations.
+
+---
+
+## Mitigate
+
+Reduce the probability or impact of the risk.
+
+Examples:
+
+- Adding automated tests.
+- Improving documentation.
+- Performing code reviews.
+- Profiling performance.
+
+---
+
+## Accept
+
+Accept the risk when its impact is minimal and mitigation is not justified.
+
+Accepted risks should always be documented with a rationale.
+
+---
+
+## Escalate
+
+Critical risks that threaten production readiness should immediately block progression to the next Quality Gate until resolved.
+
+---
+
+# Risk Review Schedule
+
+Risk reviews should occur:
+
+- At the completion of every roadmap phase.
+- Before passing each Quality Gate.
+- Before creating a Release Candidate.
+- Before every production release.
+- Whenever major architectural changes are introduced.
+
+---
+
+# Exit Criteria
+
+A production release should not proceed if:
+
+- Any Critical risk remains unresolved.
+- Multiple High severity risks remain open.
+- Known risks compromise data integrity, gameplay correctness, accessibility, or application stability.
+- Risks have not been reassessed since the previous roadmap phase.
+
+The objective of this Risk Register is not to eliminate all project risk, but to ensure that risks are identified early, managed proactively, and never ignored throughout the DareDrop development lifecycle.
+
+# Appendix E — Project Standards & Conventions
+
+This appendix defines the engineering standards and conventions that should be followed throughout the DareDrop project.
+
+These standards ensure consistency, maintainability, scalability, and long-term code quality. All new code should follow these conventions unless a documented exception has been approved.
+
+---
+
+# General Principles
+
+Every implementation should prioritize:
+
+- Readability over cleverness.
+- Simplicity over unnecessary abstraction.
+- Reusability over duplication.
+- Composition over inheritance.
+- Consistency over personal preference.
+
+Code should be written for long-term maintainability rather than short-term convenience.
+
+---
+
+# Project Structure
+
+Every file should belong to the appropriate architectural layer.
+
+```
+app/
+components/
+theme/
+store/
+services/
+hooks/
+utils/
+types/
+constants/
+data/
+animations/
+docs/
+```
+
+Business logic should never bypass the intended architecture.
+
+---
+
+# Component Standards
+
+All reusable UI elements should:
+
+- Be placed inside the `components/` directory.
+- Use the `App` prefix (e.g., `AppButton`, `AppCard`).
+- Be reusable across multiple screens.
+- Avoid screen-specific business logic.
+- Use semantic theme tokens.
+- Support accessibility where applicable.
+- Avoid unnecessary prop complexity.
+
+Components should remain presentation-focused.
+
+---
+
+# Screen Standards
+
+Each screen should:
+
+- Contain only screen-level composition.
+- Delegate business logic to stores or services.
+- Reuse shared components whenever possible.
+- Avoid duplicating layouts or styling.
+- Handle loading, empty, and error states appropriately.
+
+Screens should never become large containers of business logic.
+
+---
+
+# State Management Standards
+
+Zustand stores should:
+
+- Represent application state only.
+- Avoid direct UI rendering responsibilities.
+- Keep actions focused and predictable.
+- Persist data only through the storage service.
+- Avoid unnecessary cross-store coupling.
+
+Complex calculations should be delegated to services.
+
+---
+
+# Service Layer Standards
+
+Services should:
+
+- Contain business rules.
+- Be deterministic where possible.
+- Avoid direct UI dependencies.
+- Be independently testable.
+- Expose clear interfaces.
+
+Services should not access React components directly.
+
+---
+
+# Theme Standards
+
+All styling should use semantic design tokens.
+
+Avoid:
+
+- Hardcoded colors
+- Hardcoded spacing
+- Hardcoded typography
+- Hardcoded border radius
+- Hardcoded elevation values
+
+The theme should remain the single source of truth for visual styling.
+
+---
+
+# Styling Standards
+
+Styling should prioritize consistency.
+
+Preferred order:
+
+1. Theme tokens
+2. Shared style utilities
+3. Component-specific styles
+
+Avoid duplicating identical styles across multiple components.
+
+---
+
+# File Naming
+
+Use the following conventions:
+
+| Item | Convention |
+|------|------------|
+| Components | PascalCase |
+| Screens | PascalCase |
+| Hooks | camelCase beginning with `use` |
+| Services | camelCase |
+| Stores | camelCase ending with `Store` |
+| Types | PascalCase |
+| Constants | camelCase |
+| Utilities | camelCase |
+
+Examples:
+
+```
+AppButton.tsx
+PlayerSetupScreen.tsx
+useGameTimer.ts
+storageService.ts
+gameSessionStore.ts
+player.ts
+```
+
+---
+
+# Folder Ownership
+
+Each folder has a single responsibility.
+
+| Folder | Responsibility |
+|----------|----------------|
+| app | Navigation and screens |
+| components | Reusable UI |
+| theme | Design system |
+| services | Business logic |
+| store | Application state |
+| hooks | Shared React hooks |
+| utils | Generic helper functions |
+| constants | Static configuration |
+| types | Shared TypeScript types |
+| data | Bundled offline content |
+
+Responsibilities should not overlap.
+
+---
+
+# Documentation Standards
+
+Documentation should always remain synchronized with implementation.
+
+Whenever an implementation changes:
+
+- Update related documentation.
+- Remove outdated information.
+- Keep examples accurate.
+- Avoid speculative documentation.
+
+Documentation should never overstate project progress.
+
+---
+
+# Testing Standards
+
+Whenever practical:
+
+- Services should include unit tests.
+- Stores should include unit tests.
+- Critical gameplay logic should be tested.
+- Bug fixes should include regression tests.
+
+Testing should focus on correctness rather than coverage percentages.
+
+---
+
+# Accessibility Standards
+
+All user-facing features should:
+
+- Support screen readers.
+- Use semantic accessibility roles.
+- Meet minimum touch target sizes.
+- Maintain sufficient color contrast.
+- Respect reduced motion preferences where applicable.
+
+Accessibility should be considered during implementation rather than added later.
+
+---
+
+# Performance Standards
+
+Performance optimizations should be guided by measurement rather than assumption.
+
+Prefer:
+
+- Memoization where beneficial.
+- Efficient list rendering.
+- Stable object references.
+- Shared animations.
+- Avoiding unnecessary re-renders.
+
+Premature optimization should be avoided.
+
+---
+
+# Dependency Standards
+
+Before introducing a new dependency, verify:
+
+- The functionality cannot reasonably be implemented internally.
+- The dependency is actively maintained.
+- The package size is appropriate.
+- The dependency aligns with the project's architecture.
+- The dependency does not duplicate existing functionality.
+
+Unused dependencies should be removed promptly.
+
+---
+
+# Code Review Checklist
+
+Every completed feature should be reviewed for:
+
+- Architecture compliance
+- Type safety
+- Accessibility
+- Performance
+- Documentation updates
+- Design consistency
+- Test coverage
+- Readability
+- Reusability
+
+A feature should not be considered complete until it satisfies the project's Definition of Done and applicable Quality Gates.
+
+---
+
+# Long-Term Maintainability
+
+Throughout development, prioritize decisions that reduce future maintenance effort.
+
+When faced with multiple valid solutions, prefer the one that:
+
+- Simplifies future development.
+- Improves consistency.
+- Reduces duplication.
+- Preserves architectural boundaries.
+- Minimizes technical debt.
+
+Maintaining a clean and predictable codebase is a continuous responsibility shared across every phase of the DareDrop project.
+
+# Appendix F — Development Workflow
+
+This appendix defines the recommended development workflow for implementing the DareDrop roadmap.
+
+The objective is to ensure that every feature is developed consistently, reviewed thoroughly, and integrated into the project without introducing regressions or architectural drift.
+
+---
+
+# Development Lifecycle
+
+Every feature should progress through the following lifecycle:
+
+```
+Planning
+    ↓
+Implementation
+    ↓
+Self Review
+    ↓
+Testing
+    ↓
+Documentation Update
+    ↓
+Quality Verification
+    ↓
+Phase Completion
+```
+
+No phase should skip any stage of this workflow.
+
+---
+
+# Step 1 — Planning
+
+Before writing code:
+
+- Review the relevant roadmap phase.
+- Review all related specification documents.
+- Understand dependencies.
+- Verify architectural boundaries.
+- Identify reusable components before creating new ones.
+
+Expected outcome:
+
+- Clear implementation plan.
+- No ambiguity about scope.
+
+---
+
+# Step 2 — Implementation
+
+During development:
+
+- Follow the architecture defined in the roadmap.
+- Use shared components whenever possible.
+- Keep business logic out of UI components.
+- Keep commits small and focused.
+- Avoid introducing unnecessary abstractions.
+
+Expected outcome:
+
+- Working implementation aligned with project standards.
+
+---
+
+# Step 3 — Self Review
+
+Before considering work complete:
+
+- Review the entire implementation.
+- Remove dead code.
+- Simplify overly complex logic.
+- Verify naming consistency.
+- Check for duplicated functionality.
+- Confirm architecture compliance.
+
+Expected outcome:
+
+- Clean, maintainable implementation.
+
+---
+
+# Step 4 — Testing
+
+Verify:
+
+- Expected behavior.
+- Edge cases.
+- Invalid inputs.
+- Error handling.
+- Persistence.
+- Navigation.
+- Gameplay correctness.
+
+Whenever practical:
+
+- Add unit tests.
+- Update regression tests.
+- Verify manual gameplay.
+
+Expected outcome:
+
+- Stable implementation with acceptable confidence.
+
+---
+
+# Step 5 — Documentation
+
+Documentation should always evolve alongside implementation.
+
+Update:
+
+- CURRENT_STATE.md
+- Relevant specification files
+- README (if applicable)
+- Roadmap progress
+
+Documentation should accurately reflect the repository at all times.
+
+Expected outcome:
+
+- No documentation drift.
+
+---
+
+# Step 6 — Quality Verification
+
+Before closing a feature:
+
+- Run TypeScript type checking.
+- Run ESLint.
+- Verify formatting.
+- Review accessibility.
+- Review responsiveness.
+- Confirm design consistency.
+- Verify production build compatibility.
+
+Expected outcome:
+
+- Production-quality implementation.
+
+---
+
+# Step 7 — Phase Completion
+
+A roadmap phase should only be marked complete after:
+
+- All planned tasks are finished.
+- Definition of Done has been satisfied.
+- Applicable Quality Gate has been passed.
+- Documentation has been updated.
+- No Critical or High severity issues remain.
+
+Expected outcome:
+
+- Stable foundation for the next roadmap phase.
+
+---
+
+# Daily Development Workflow
+
+The recommended daily workflow is:
+
+```
+Pull latest changes
+        ↓
+Review roadmap phase
+        ↓
+Select one task
+        ↓
+Implement
+        ↓
+Self review
+        ↓
+Run lint & typecheck
+        ↓
+Test manually
+        ↓
+Update documentation
+        ↓
+Commit
+```
+
+Avoid working on multiple unrelated tasks simultaneously.
+
+---
+
+# Bug Fix Workflow
+
+When fixing defects:
+
+1. Reproduce the issue.
+2. Identify the root cause.
+3. Implement the smallest correct fix.
+4. Verify that the issue is resolved.
+5. Confirm no regressions have been introduced.
+6. Update documentation if behavior changes.
+7. Add regression tests where practical.
+
+Avoid fixing symptoms without addressing the underlying cause.
+
+---
+
+# Refactoring Workflow
+
+Refactoring should preserve behavior.
+
+Before refactoring:
+
+- Understand the existing implementation.
+- Identify dependencies.
+- Ensure sufficient test coverage.
+
+After refactoring:
+
+- Confirm behavior is unchanged.
+- Remove obsolete code.
+- Update documentation if necessary.
+
+Refactoring should improve maintainability without altering functionality.
+
+---
+
+# Feature Integration Checklist
+
+Before merging a completed feature:
+
+- Architecture remains consistent.
+- Design system is respected.
+- Accessibility is maintained.
+- Documentation is updated.
+- Tests pass.
+- No unnecessary dependencies were introduced.
+- No duplicate logic exists.
+- Performance remains acceptable.
+
+---
+
+# Continuous Improvement
+
+Throughout development:
+
+- Review previous implementation decisions.
+- Simplify code whenever possible.
+- Reduce technical debt incrementally.
+- Improve documentation continuously.
+- Prefer sustainable engineering practices over short-term speed.
+
+The objective is to deliver a production-ready application while maintaining a clean, scalable, and maintainable codebase throughout the DareDrop development lifecycle.
+
