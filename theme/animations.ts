@@ -1,35 +1,29 @@
-const baseDurations = {
-  fast: 80,
-  normal: 200,
-  slow: 250,
-} as const;
+/**
+ * Motion / animation tokens — single source of truth.
+ *
+ * Canonical tokens per PROJECT_CONTEXT.md Section 5.7.
+ * Only exported motion constants — no animation implementations.
+ */
 
 export const animations = Object.freeze({
-  /** Timing values for short feedback and transition-driven interactions. */
-  durations: {
-    fast: baseDurations.fast,
-    normal: baseDurations.normal,
-    slow: baseDurations.slow,
-    buttonPress: 80,
-    cardReveal: 180,
-    screenTransition: 220,
-    spin: 1000,
-    confetti: 1200,
+  /** Timing durations in milliseconds. */
+  duration: {
+    /** 200ms — screen transitions, fades (spec: 200–250ms). */
+    standard: 200,
+    /** 80ms — button press feedback. */
+    pressScale: 80,
   },
 
-  /** Scale tokens for pressed, resting, and focused surface states. */
-  scale: {
-    buttonPressed: 0.96,
-    buttonDefault: 1,
-    cardDefault: 1,
-    cardFocused: 1.02,
+  /** Easing curves. */
+  easing: {
+    /** Default for all transitions. */
+    standard: "ease-out" as const,
   },
 
-  /** Stagger timings for sequential element appearance. */
-  stagger: {
-    fast: 80,
-    normal: 120,
-  },
+  /** 0.96 — button press target scale. */
+  pressScale: 0.96,
+
+  // ── Practical extensions (spring configs for Reanimated worklets) ──
 
   /** Reusable spring configuration values for motion systems. */
   spring: {
@@ -49,10 +43,16 @@ export const animations = Object.freeze({
       mass: 1,
     },
   },
+
+  // ── Deprecated aliases (kept for component compatibility) ──
+
+  /**
+   * @deprecated Use `animations.pressScale` directly instead of `animations.scale.buttonPressed`.
+   */
+  scale: {
+    buttonPressed: 0.96,
+    buttonDefault: 1,
+  },
 } as const);
 
-export type AppAnimationDuration = keyof typeof animations.durations;
-export type AppAnimationScale = keyof typeof animations.scale;
-export type AppAnimationStagger = keyof typeof animations.stagger;
-export type AppAnimationSpring = keyof typeof animations.spring;
-
+export type Animations = typeof animations;

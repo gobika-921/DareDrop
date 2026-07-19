@@ -279,9 +279,8 @@ Current components include:
 - AppInput
 - AppChip
 - AppAvatar
-- AppModal
-- AppBottomSheet
-- AppProgressBar
+- AppDivider
+- AppSwitch
 
 These components establish the foundation for future screen development.
 
@@ -358,9 +357,8 @@ Current implementation status:
 | AppInput | ✅ Complete | Theme-driven input component |
 | AppChip | ✅ Complete | Used for player chips and filters |
 | AppAvatar | ✅ Complete | Displays player initials and avatar color |
-| AppModal | ✅ Complete | Reusable dialog container |
-| AppBottomSheet | ✅ Complete | Bottom sheet wrapper |
-| AppProgressBar | ✅ Complete | Gameplay progress indicator |
+| AppDivider | ✅ Complete | Visual separator component |
+| AppSwitch | ✅ Complete | Toggle switch component |
 
 Although architecturally complete, several components were implemented before the finalized UI specification became available.
 
@@ -381,19 +379,19 @@ Whenever possible, existing public APIs should be preserved.
 
 # 9. Offline Application Data
 
-DareDrop ships with bundled offline content.
+DareDrop is designed to ship with bundled offline content.
 
 No internet connection is required to play.
 
-The application currently includes three built-in dare packs.
+The application is planned to include three built-in dare packs.
 
 ## Mild
 
 Status
 
-✅ Complete
+🔴 Not Implemented
 
-Contains:
+Planned:
 
 15 default dares
 
@@ -413,9 +411,9 @@ Safe for most groups.
 
 Status
 
-✅ Complete
+🔴 Not Implemented
 
-Contains:
+Planned:
 
 15 default dares
 
@@ -435,9 +433,9 @@ Performance-based challenges.
 
 Status
 
-✅ Complete
+🔴 Not Implemented
 
-Contains:
+Planned:
 
 15 default dares
 
@@ -453,7 +451,7 @@ Still safe for public release.
 
 ---
 
-Built-in dare packs are immutable.
+Built-in dare packs will be immutable.
 
 They should never be modified during runtime.
 

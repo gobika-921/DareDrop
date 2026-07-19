@@ -1,1041 +1,531 @@
-# DareDrop — Current Project State
+# DareDrop — Game Rules
 
-> This document records the current implementation status of the DareDrop project.
->
-> It serves as the operational status report for the codebase and should always reflect the actual implementation rather than the planned architecture.
->
-> Unlike **PROJECT_CONTEXT.md**, which defines how the project *should* be built, this document records what has *already been built*.
->
-> Before implementing any new feature, every AI assistant and developer must read this document to understand:
->
-> * what already exists
-> * what still needs to be implemented
-> * what requires refinement
-> * which architectural decisions have already been made
->
-> This document should be updated whenever a significant implementation milestone is completed.
+**Version:** 1.0
+**Status:** Canonical
+
+This document defines the complete gameplay mechanics, randomization behavior, fairness rules, and edge case handling for DareDrop. It is the authoritative source for all gameplay logic and must be followed exactly by the randomization service and game session store.
 
 ---
 
-# 1. Purpose
+## 1. Gameplay Lifecycle
 
-The purpose of this document is to provide an accurate snapshot of the project's implementation status.
+A DareDrop session follows a linear progression from setup to completion:
 
-It prevents future development sessions from:
+```
+Player Setup → Game Setup → Ready Lobby → Spin → Reveal → (Repeat Spin/Reveal) → Summary
+```
 
-* rebuilding completed features
-* introducing duplicate implementations
-* replacing stable architecture unnecessarily
-* making assumptions about implementation progress
-* generating code for features that already exist
+### 1.1 Session States
 
-This file is the canonical source of implementation progress.
+| State | Description | Entry Condition | Exit Condition |
+|---|---|---|---|
+| `Draft` | Players being added | User starts "Start Game" | ≥2 players, user taps Next |
+| `Configuring` | Game configuration being set | From Draft with valid players | Valid configuration, user taps Next |
+| `Ready` | Final confirmation screen | From Configuring with valid config | User taps "Start Game" |
+| `Active` | Gameplay in progress | From Ready | Round limit reached or user ends game |
+| `Completed` | Game finished, summary generated | From Active | User navigates away or starts new game |
+| `Archived` | Session persisted for history | From Completed | User deletes or session expires |
 
-If this document conflicts with PROJECT_CONTEXT.md, the architectural decisions in PROJECT_CONTEXT.md remain authoritative while this document reflects the current implementation status.
+### 1.2 Round Lifecycle
 
----
+Each individual round follows this state machine:
 
-# 2. Current Project Status
+```
+Pending → Revealed → Resolved
+```
 
-## Project Stage
-
-Pre-Alpha
-
-## Overall Progress
-
-Core Architecture
-
-🟢 Stable
-
-Design System
-
-🟢 Complete
-
-Reusable Component Library
-
-🟡 In Progress
-
-Application Screens
-
-🔴 Not Started
-
-Game Logic
-
-🔴 Not Started
-
-Application State
-
-🟡 Foundation Ready
-
-Animations
-
-🟡 Foundation Ready
-
-Offline Data
-
-🟡 Foundation Ready
-
-Persistence
-
-🟡 Foundation Ready
-
-Testing
-
-🔴 Not Started
-
-Performance Optimization
-
-🔴 Not Started
-
-Accessibility Audit
-
-🔴 Not Started
-
-Documentation
-
-🟢 In Progress
-
-The project has completed its foundational architecture and is transitioning from infrastructure development into application development.
+| State | Description | Transition Trigger |
+|---|---|---|
+| `Pending` | Player and dare selected internally | Spin animation begins |
+| `Revealed` | Player and dare shown to user | Spin animation completes |
+| `Resolved` | Outcome recorded (Completed/Skipped/Passed) | User action (Next/Skip/Pass) |
 
 ---
 
-# 3. Development Philosophy
+## 2. Round Progression
 
-The project follows an architecture-first development strategy.
+### 2.1 Round Counting
 
-Instead of rapidly building screens, the application is constructed in layers:
+- Rounds are numbered sequentially starting at 1
+- Round numbers are gapless — no skipped numbers
+- The maximum round count is determined by `GameConfiguration.rounds`
+- If `rounds` is set to ∞, the game continues until all players choose to end
 
-1. Project Infrastructure
-2. Design System
-3. Reusable Component Library
-4. Domain Models
-5. Offline Data Layer
-6. Services
-7. State Management
-8. Application Screens
-9. Gameplay Logic
-10. Motion & Polish
-11. Testing
-12. Production Optimization
+### 2.2 Round Completion
 
-This approach minimizes technical debt and ensures every future feature is built on a stable foundation.
----
+A round is considered complete when:
 
-# 2. Technology Stack
+1. The round state transitions to `Resolved`
+2. A `HistoryEntry` is appended to the session history
+3. The round counter (if finite) is incremented
 
-DareDrop is intentionally built using a modern React Native stack that emphasizes maintainability, performance, type safety, and long-term scalability.
+### 2.3 Game End Conditions
 
-Every future implementation must remain compatible with this stack.
+The game ends when:
 
-Introducing alternative libraries without explicit architectural approval should be avoided.
+- **Natural completion:** The round counter reaches `GameConfiguration.rounds` (if finite)
+- **Early termination:** User explicitly ends the game from Reveal or Settings
+- **Degenerate case:** All players are removed (should be prevented by UI)
 
 ---
 
-## Core Framework
+## 3. Player Rotation
 
-### Expo SDK
+### 3.1 Selection Pool
 
-Provides:
+The eligible player pool consists of all players in `GameSession.players` (the snapshot taken at game start).
 
-- native build tooling
-- OTA updates
-- platform APIs
-- development tooling
+### 3.2 Randomization Rules
 
-Expo remains the primary application runtime.
+Player selection follows these rules in order:
 
-Avoid ejecting unless absolutely necessary.
+1. **Fairness:** Every eligible player has equal probability of selection per round
+2. **No immediate repetition (soft preference):** If possible, avoid selecting the same player twice consecutively
+3. **No-repeat rule enforcement:** If `GameConfiguration.rules.noRepeatPlayers` is enabled, no player may be selected twice until all players have been selected at least once in the current cycle
 
----
+### 3.3 No-Repeat Player Logic
 
-### React Native
+When `noRepeatPlayers` is enabled:
 
-Provides:
+- Track which players have been selected in the current cycle
+- A cycle completes when every player has been selected at least once
+- When a cycle completes, reset the "selected" tracking and begin a new cycle
+- If only one eligible player remains, immediate repetition is unavoidable and permitted
 
-- native rendering
-- platform APIs
-- UI primitives
+### 3.4 Edge Cases
 
-All user interfaces should be built using React Native components wrapped by the application's reusable component library.
-
----
-
-### TypeScript
-
-Strict Mode is enabled.
-
-The codebase should never rely on:
-
-- any
-- implicit any
-- unchecked type assertions
-
-All new code should satisfy strict compiler rules without suppressing errors.
+- **Single player:** Should be prevented by UI validation (minimum 2 players required)
+- **All players used in cycle:** Reset tracking, all players become eligible again
+- **Game configuration change mid-game:** Not allowed — configuration is immutable once `Active`
 
 ---
 
-## Navigation
+## 4. Dare Selection
 
-### Expo Router
+### 4.1 Selection Pool
 
-Responsible for:
+The eligible dare pool consists of all dares from:
 
-- file-based routing
-- screen navigation
-- deep linking
-- route grouping
+- Bundled packs (if selected in `GameConfiguration.selectedPackIds`)
+- Custom packs (if selected and containing dares)
+- Filtered by enabled difficulties in `GameConfiguration.difficulty`
 
-All screens should live under:
+### 4.2 Randomization Rules
 
-app/
+Dare selection follows these rules in order:
 
-Do not introduce React Navigation manually unless the project architecture explicitly evolves to require it.
+1. **Fairness:** Every eligible dare has equal probability of selection per round
+2. **No immediate repetition (soft preference):** If possible, avoid selecting the same dare twice consecutively
+3. **No-repeat rule enforcement:** If `GameConfiguration.rules.noRepeatDares` is enabled, no dare may be selected twice until all eligible dares have been used at least once
 
----
+### 4.3 No-Repeat Dare Logic
 
-## Styling
+When `noRepeatDares` is enabled:
 
-### NativeWind
+- Track which dares have been used in the current session
+- When all eligible dares have been used, reset the "used" tracking
+- If only one eligible dare remains, immediate repetition is unavoidable and permitted
 
-NativeWind is used primarily for:
+### 4.4 Difficulty Filtering
 
-- flexbox utilities
-- layout helpers
-- positioning
-- responsive composition
+Only dares matching at least one enabled difficulty are eligible:
 
-Examples include:
+- If only "Mild" is enabled, only Mild dares are eligible
+- If "Mild" and "Spicy" are enabled, both Mild and Spicy dares are eligible
+- If no dares match the enabled difficulties, the configuration is invalid (UI should prevent this)
 
-- flex
-- flex-row
-- items-center
-- justify-between
-- absolute
-- relative
+### 4.5 Edge Cases
 
-However:
-
-NativeWind should never replace the design system.
-
-Theme tokens remain the authoritative source for:
-
-- colors
-- spacing
-- typography
-- radius
-- shadows
-
-Avoid embedding design values directly into Tailwind utility classes.
+- **Empty pool:** Should be prevented by UI validation (at least one dare must be eligible)
+- **All dares used:** Reset tracking, all eligible dares become available again
+- **Custom pack deleted mid-game:** Not allowed — custom content is immutable during `Active` session
 
 ---
 
-### StyleSheet
+## 5. Skip Rules
 
-Reusable components should primarily use:
+### 5.1 Skip Limit
 
-StyleSheet.create()
+Each player has a maximum number of skips determined by `GameConfiguration.skipLimit`:
 
-Reasons:
+- If `skipLimit` is 0, no skips are allowed
+- If `skipLimit` is ∞, unlimited skips are allowed
+- If `skipLimit` is N, each player may skip at most N times
 
-• static style allocation
+### 5.2 Skip Consumption
 
-• improved performance
+A skip is consumed when:
 
-• predictable rendering
+1. The user taps "Skip" on the Reveal screen
+2. The Skip Bottom Sheet confirms the action
+3. The round resolves with `result: "Skipped"`
 
-• easier maintenance
+### 5.3 Skip Tracking
 
-Dynamic styling should only be introduced when truly required.
+Skip counts are **derived** from `GameSession.history`, not stored on `Player`:
 
----
+- For a given player, `skipsUsed = count of HistoryEntry where playerId === player.id AND result === "Skipped"`
+- This ensures accuracy even if player names change (player IDs are immutable)
 
-## Animation
+### 5.4 Skip Validation
 
-### React Native Reanimated
+Before allowing a skip, the system must verify:
 
-Responsible for:
+- `skipsUsed < skipLimit` (or `skipLimit === ∞`)
+- If the limit is reached, the Skip button should be disabled/hidden
 
-- screen transitions
-- gesture animations
-- card animations
-- shared values
-- performant UI-thread animations
+### 5.5 Edge Cases
 
-Animation durations should always originate from:
-
-theme/animations
-
-Never hardcode animation timing.
-
----
-
-### Gesture Handler
-
-Used for:
-
-- Bottom Sheets
-- swipe interactions
-- drag gestures
-- future card interactions
-
-Gesture implementations should remain isolated from business logic.
+- **Skip limit changed mid-game:** Not allowed — configuration is immutable once `Active`
+- **Player removed mid-game:** Not allowed — player list is immutable once `Active`
+- **Skip limit > rounds:** UI should validate this during Game Setup (`skipLimit ≤ rounds` unless `rounds === ∞`)
 
 ---
 
-## Persistence
+## 6. Pass Rules
 
-### AsyncStorage
+### 6.1 Pass Availability
 
-Responsible for persistent local storage.
+Passes are only available if `GameConfiguration.rules.allowPasses` is `true`.
 
-Current responsibilities include:
+### 6.2 Pass Behavior
 
-• Settings
+A pass:
 
-• Custom Dare Packs
+- Does **not** consume a skip
+- Does **not** count against any limit
+- Resolves the round with `result: "Passed"`
+- Is recorded in history like any other outcome
 
-• Custom Dares
+### 6.3 Pass Confirmation
 
-• Recent Game Data (optional)
+Passes require confirmation via a dialog (not a bottom sheet) because:
 
-Built-in content should never be written into AsyncStorage.
+- They are a yes/no decision, not a multi-step action
+- They don't consume a limited resource (unlike skips)
+- A lightweight dialog is appropriate for simple confirmations
 
----
+### 6.4 Edge Cases
 
-## Graphics
-
-### React Native SVG
-
-Responsible for:
-
-- custom icons
-- illustrations
-- logo rendering
-- progress visuals
-
-Avoid bitmap assets whenever scalable vector graphics are appropriate.
+- **Pass rule changed mid-game:** Not allowed — configuration is immutable once `Active`
+- **Pass used when disabled:** Should be prevented by UI (Pass button absent if `allowPasses === false`)
 
 ---
 
-## Platform Features
+## 7. History Rules
 
-### Expo Blur
+### 7.1 History Entry Creation
 
-Used for:
+A `HistoryEntry` is created **only** when a round transitions to `Resolved`.
 
-- modal backgrounds
-- bottom sheet overlays
-- premium depth effects
+The entry captures:
 
-Blur should remain subtle.
+- `roundNumber`: The sequential round number
+- `playerId`: Reference to the player
+- `playerNameSnapshot`: Denormalized player name (for historical accuracy)
+- `dareId`: Reference to the dare
+- `dareTextSnapshot`: Denormalized dare text (for historical accuracy)
+- `difficulty`: The dare's difficulty
+- `result`: The outcome ("Completed" | "Skipped" | "Passed")
+- `timestamp`: ISO 8601 timestamp of resolution
 
-It should never reduce readability.
+### 7.2 Snapshot Rationale
 
----
+The snapshot fields (`playerNameSnapshot`, `dareTextSnapshot`) are intentional:
 
-### Expo Haptics
+- Player names and custom dare texts are mutable pre-game
+- History must remain accurate even if the source entity changes later
+- This is the **only** exception to "reference by ID only" in the data model
 
-Responsible for tactile feedback.
+### 7.3 History Immutability
 
-Examples:
+Once created, a `HistoryEntry` is **never modified or deleted**:
 
-Button press
+- History is append-only
+- No undo or edit operations on past rounds
+- This ensures the historical record is trustworthy
 
-Spin confirmation
+### 7.4 History Filtering
 
-Round completion
+The History screen allows filtering by result type:
 
-Success actions
+- All: Show all entries
+- Completed: Show only `result === "Completed"`
+- Skipped: Show only `result === "Skipped"`
+- Passed: Show only `result === "Passed"`
 
-Important actions should provide subtle haptic confirmation where appropriate.
-
----
-
-# 3. Project Milestones
-
-Development follows an incremental phase-based architecture.
-
-Each completed phase establishes a stable foundation for the next.
-
-Future implementations should build upon existing work rather than replacing it.
-
----
-
-## Phase 0 — Project Initialization
-
-### Status
-
-✅ Complete
-
-### Purpose
-
-Establish the application's engineering foundation.
-
-### Deliverables
-
-The following infrastructure has been successfully configured:
-
-• Expo Router
-
-• TypeScript Strict Mode
-
-• NativeWind
-
-• React Native Reanimated
-
-• Gesture Handler
-
-• AsyncStorage
-
-• Expo Blur
-
-• Expo Haptics
-
-• React Native SVG
-
-• ESLint
-
-• Prettier
-
-• Path Aliases
-
-• Font Loading
-
-• Project Folder Structure
-
-### Outcome
-
-The application architecture is stable and ready for feature development.
+Filtering is a **read-time transformation**, not a separate stored list.
 
 ---
 
-## Phase 1 — Design System
+## 8. Summary Generation
 
-### Status
+### 8.1 Generation Timing
 
-✅ Complete
+A `Summary` is generated **once**, when the `GameSession` transitions to `Completed`.
 
-### Purpose
+### 8.2 Summary Contents
 
-Create a centralized design system that every future component must consume.
+The summary includes:
 
-### Implemented Modules
+- `totalRounds`: Total number of rounds played
+- `completed`: Count of rounds with `result === "Completed"`
+- `skipped`: Count of rounds with `result === "Skipped"`
+- `passed`: Count of rounds with `result === "Passed"`
+- `completionRate`: `completed / totalRounds` (computed once, stored)
+- `awards`: Array of `Award` objects (see Section 9)
 
-Semantic Colors
+### 8.3 Statistical Accuracy
 
-Spacing Tokens
+The summary statistics are derived from `GameSession.history`:
 
-Radius Tokens
+- `totalRounds = history.length`
+- `completed = count(history, entry => entry.result === "Completed")`
+- `skipped = count(history, entry => entry.result === "Skipped")`
+- `passed = count(history, entry => entry.result === "Passed")`
 
-Typography Tokens
+The invariant: `completed + skipped + passed === totalRounds` must always hold.
 
-Animation Tokens
+### 8.4 Edge Cases
 
-Shadow Tokens
-
-Theme Barrel Export
-
-### Architecture
-
-All design values are exposed exclusively through:
-
-theme/
-
-Future code must import tokens only from:
-
-import {
-    colors,
-    spacing,
-    radius,
-    typography,
-    animations,
-    shadows,
-} from "@/theme";
-
-Direct imports from individual token files should be avoided.
-
-### Outcome
-
-The visual language of DareDrop has been standardized.
-
-No future UI should introduce hardcoded visual values.
+- **Degenerate session (0 rounds):** Summary shows all zeros, awards section omitted
+- **Early termination:** Summary reflects whatever rounds were completed
+- **Summary regeneration:** Not allowed — summary is write-once
 
 ---
 
-## Phase 2 — Reusable Component Library
+## 9. Awards
 
-### Status
+### 9.1 Award Types
 
-🟡 In Progress
+The following awards are computed at game end:
 
-### Purpose
+| Award Title | Criteria |
+|---|---|
+| "Dare Devil" | Highest completion rate among players with ≥3 rounds |
+| "Biggest Chicken" | Most skips used among players with ≥3 rounds |
+| "Skip Master" | Most skips used without any passes (if any skips exist) |
+| "Most Fearless" | Zero skips used and ≥5 rounds completed |
+| "Comedy King" | Most completed dares (highest raw count) |
 
-Replace raw React Native primitives with reusable, production-quality components.
+### 9.2 Award Computation
 
-### Current Components
+Awards are computed from `GameSession.history`:
 
-The following components have already been implemented:
+1. Group history entries by `playerId`
+2. For each player, compute:
+   - `roundsPlayed = count of entries for this player`
+   - `completed = count of entries with result === "Completed"`
+   - `skipped = count of entries with result === "Skipped"`
+   - `passed = count of entries with result === "Passed"`
+   - `completionRate = completed / roundsPlayed` (if roundsPlayed > 0)
+3. Apply award criteria to determine winners
+4. Create `Award` objects with `playerId`, `title`, and `description`
 
-• AppText
+### 9.3 Tie-Breaking
 
-• AppButton
+When multiple players tie for an award:
 
-• AppCard
+- Use the player who joined earliest (lowest index in `GameSession.players`)
+- This is deterministic and predictable
+- The tie-break rule should be documented in the award description
 
-• AppInput
+### 9.4 Minimum Round Threshold
 
-• AppChip
+Some awards require a minimum number of rounds to be eligible:
 
-• AppAvatar
+- "Dare Devil", "Biggest Chicken", "Skip Master": ≥3 rounds
+- "Most Fearless": ≥5 rounds
+- "Comedy King": No minimum (but requires at least 1 completion)
 
-• AppModal
+Players below the threshold are not eligible for that award.
 
-• AppBottomSheet
+### 9.5 Edge Cases
 
-• AppProgressBar
-
-### Current Assessment
-
-These components successfully establish the reusable component architecture.
-
-However, several were implemented before the final UI specification became available.
-
-They should therefore be considered architecturally stable but visually provisional.
-
-Future refinement should focus on improving visual fidelity while preserving public APIs wherever practical.
-
-### Component Standards
-
-Every reusable component should continue to satisfy:
-
-✓ Theme-driven styling
-
-✓ Accessibility
-
-✓ Strong typing
-
-✓ Memoization where appropriate
-
-✓ Design token usage
-
-✓ Production-ready architecture
+- **No eligible players for an award:** Omit that award from the summary
+- **All awards omitted:** Show statistics only, no awards section
+- **Single player:** Awards still apply if criteria are met
 
 ---
 
-# 4. Current Repository Structure
+## 10. Edge Cases
 
-The project currently follows a modular feature-oriented organization.
+### 10.1 Configuration Validation
 
-Primary directories include:
+Before allowing a game to start, validate:
 
-app/
-    Application routes
+- At least 2 players
+- At least one difficulty enabled
+- At least one pack selected with ≥1 eligible dare
+- `skipLimit ≤ rounds` (unless `rounds === ∞`)
+- `rounds` between 5 and 100 (or ∞)
 
-components/
-    Reusable UI components
+### 10.2 Empty Pool Handling
 
-theme/
-    Design tokens
+If randomization produces an empty eligible pool (should not happen with proper validation):
 
-services/
-    Business logic
+- Fail gracefully with a clear error message
+- Suggest returning to Game Setup
+- Do not crash or hang
 
-hooks/
-    Shared hooks
+### 10.3 Persistence Recovery
 
-store/
-    Global state
+When recovering a persisted `Active` session:
 
-types/
-    Shared TypeScript models
+- Validate that all referenced entities still exist
+- If a custom dare/pack was deleted, treat the session as corrupted and offer to reset
+- If a bundled dare is missing (should never happen), treat as a data integrity error
 
-constants/
-    Static constants
+### 10.4 Concurrent Modification
 
-utils/
-    Pure helper functions
+The following operations are **not allowed** during an `Active` session:
 
-animations/
-    Shared animation utilities
+- Modifying `GameConfiguration`
+- Adding/removing players
+- Editing custom dares/packs
+- Changing game rules
 
-data/
-    Offline application assets
+These operations are blocked by the store layer, not just the UI.
 
-docs/
-    Project documentation
+### 10.5 Network/Offline Behavior
 
-Additional folders may be introduced only when they improve architectural clarity.
+DareDrop is offline-first:
 
----
-
-# 8. Reusable Component Library
-
-The reusable component library is the foundation of every screen within DareDrop.
-
-All user interfaces must be composed from reusable components before introducing screen-specific UI.
-
-This ensures:
-
-- visual consistency
-- centralized maintenance
-- predictable behavior
-- accessibility
-- scalability
-
-Components should never contain application-specific business logic.
-
-Business behavior belongs to screens, hooks, stores, or services.
+- No network calls during gameplay
+- All randomization is local
+- No account or authentication required
+- No cloud sync (future feature, not in v1)
 
 ---
 
-## Component Status
+## 11. Restart Behavior
 
-| Component | Status | Notes |
-|------------|--------|-------|
-| AppText | ✅ Complete | Foundation typography component |
-| AppButton | ✅ Complete | Supports semantic variants and states |
-| AppCard | ✅ Complete | Standard surface component |
-| AppInput | ✅ Complete | Theme-driven text input |
-| AppChip | ✅ Complete | Used for player chips and selectable tags |
-| AppAvatar | ✅ Complete | Displays player avatar and initials |
-| AppModal | ✅ Complete | Reusable centered dialog container |
-| AppBottomSheet | ✅ Complete | Reusable bottom sheet wrapper |
-| AppProgressBar | ✅ Complete | Progress indicator for gameplay |
+### 11.1 Play Again
 
----
+"Play Again" from Summary:
 
-## Planned Components
+- Creates a **new** `GameSession` with the same `players` and `configuration`
+- The previous session becomes `Archived`
+- Navigation returns to Ready Lobby
+- The new session starts at round 1
 
-The following reusable components are part of the long-term design system and have not yet been implemented.
+### 11.2 New Game
 
-### Gameplay
+"New Game" from Summary:
 
-- AppSpinButton
-- AppDareCard
-- AppRoundIndicator
-- AppDifficultyBadge
-- AppPlayerBadge
-- AppAwardCard
-- AppStatisticCard
+- Clears the player list
+- Returns to Landing/Home
+- Requires full setup flow (Player Setup → Game Setup → Ready Lobby)
+- The previous session becomes `Archived`
 
-### Inputs
+### 11.3 Session Archival
 
-- AppToggle
-- AppSlider
-- AppStepper
-- AppRadioGroup
+When a session becomes `Archived`:
 
-### Navigation
-
-- AppTopBar
-- AppBackButton
-
-### Feedback
-
-- AppLoadingOverlay
-- AppEmptyState
-- AppToast
-
-### Layout
-
-- AppDivider
-- AppSection
-- AppListItem
-- AppSurface
-
-These components should only be introduced when required by production screens.
+- It is persisted to `daredrop:archivedSessions` (if history saving is enabled)
+- It is no longer the "active" session
+- It can be viewed in history but not resumed
+- Archived sessions are capped at 50 (FIFO eviction)
 
 ---
 
-# 9. Screen Implementation Status
+## 12. Fairness Guarantees
 
-Although the navigation structure exists, production-quality screens have not yet been implemented.
+### 12.1 Statistical Fairness
 
-Future work should follow the application flow defined in PROJECT_CONTEXT.md.
+The randomization system guarantees:
 
-Implementation order should remain consistent with the product journey.
+- Equal probability for all eligible players per round
+- Equal probability for all eligible dares per round
+- No hidden weighting or bias
+- Reproducible results given the same seed (for testing)
 
-| Screen | Status |
-|---------|--------|
-| Splash | ⏳ Pending |
-| Player Setup | ⏳ Pending |
-| Game Setup | ⏳ Pending |
-| Ready Lobby | ⏳ Pending |
-| Spin | ⏳ Pending |
-| Reveal | ⏳ Pending |
-| Skip Bottom Sheet | ⏳ Pending |
-| Pass Confirmation Dialog | ⏳ Pending |
-| History | ⏳ Pending |
-| Summary | ⏳ Pending |
-| Settings | ⏳ Pending |
-| About | ⏳ Pending |
+### 12.2 Deterministic Behavior
 
-No screen should bypass reusable components.
+The randomization function is pure:
 
-Every screen should be assembled using the shared component library.
+- Input: `(eligiblePool, previousSelections, rules)`
+- Output: Next selection
+- No dependence on global mutable state
+- No hidden side effects
 
----
+### 12.3 Testing Support
 
-# 10. UI Alignment Status
+For unit testing, the randomization service should:
 
-The project originally implemented portions of the reusable component library before the final UI specification was finalized.
-
-As a result, some components may not perfectly reflect the approved visual design.
-
-Known areas requiring refinement include:
-
-- spacing consistency
-- typography hierarchy
-- elevation behavior
-- interaction feedback
-- animation polish
-- state colors
-- accessibility improvements
-- layout proportions
-
-These refinements should be performed incrementally.
-
-Existing public APIs should remain stable whenever possible.
-
-Components should evolve rather than be rewritten.
+- Accept an optional seed parameter
+- Return deterministic results when seeded
+- Allow mocking of the random number generator
 
 ---
 
-# 11. Gameplay Logic Status
+## 13. Implementation Notes
 
-Gameplay logic has intentionally not been implemented yet.
+### 13.1 Service Layer
 
-The current project focuses on establishing a solid architectural foundation before introducing business behavior.
+Gameplay logic must be implemented in `services/`:
 
-The following systems remain pending.
+- `randomizationService.ts`: Player and dare selection
+- `awardService.ts`: Award computation
+- `validationService.ts`: Configuration validation
 
-Player rotation.
+These services must be pure, testable, and independent of UI.
 
-Random dare selection.
+### 13.2 Store Layer
 
-Round progression.
+The `gameSessionStore` must:
 
-Difficulty filtering.
+- Enforce state transitions (Draft → Configuring → Ready → Active → Completed)
+- Reject invalid mutations (e.g., modifying configuration during Active)
+- Expose actions that delegate to services
+- Never contain business logic directly
 
-Skip usage.
+### 13.3 UI Layer
 
-Pass confirmation.
+Screens must:
 
-Round history.
-
-Statistics generation.
-
-Award generation.
-
-Game completion.
-
-Persistent game recovery.
-
-Each system should be implemented independently using reusable services and stores.
-
-Business logic should never be embedded inside reusable UI components.
+- Call store actions, not services directly
+- Display state, not compute it
+- Validate user input, but trust the store for business rules
+- Never bypass the store to mutate state
 
 ---
 
-# 12. State Management Status
+## 14. Future Extensions
 
-Global state architecture is planned but not yet finalized.
+### 14.1 Reserved for Future Features
 
-The following domains will eventually require dedicated stores.
+The following gameplay extensions are planned but not implemented in v1:
 
-Application Settings.
+- **Timed Mode:** Add timer per dare with `timerSecondsPerDare` configuration
+- **Couples Mode:** Pair players for dares with `pairPlayers` configuration
+- **Team Mode:** Divide players into teams with team scoring
+- **AI-Generated Dares:** Dynamically generate dares based on player preferences
 
-Player Management.
+These extensions must be added to this document before implementation.
 
-Custom Dare Packs.
+### 14.2 Extension Principles
 
-Current Game Session.
+When extending gameplay:
 
-Round Progress.
-
-Gameplay History.
-
-Summary Statistics.
-
-Transient UI State.
-
-Each store should have a clearly defined responsibility.
-
-Avoid monolithic global stores.
-
-Prefer multiple focused stores over one large application store.
-
-Derived state should be computed rather than duplicated whenever practical.
-
-# 13. Architecture Health Assessment
-
-The current architecture provides a strong foundation for long-term development.
-
-The project is organized around clear boundaries between design, presentation, state, business logic, and data.
-
-Current strengths include:
-
-- Centralized design system.
-- Theme barrel exports.
-- Strict TypeScript configuration.
-- Modular folder structure.
-- Reusable component architecture.
-- Offline-first design.
-- Production-oriented documentation.
-- Consistent naming conventions.
-
-Areas that require continued development include:
-
-- Complete screen implementation.
-- Gameplay state management.
-- Business logic services.
-- Local persistence.
-- Motion implementation.
-- Accessibility verification.
-- Automated testing.
-- Performance profiling.
-
-No architectural rewrites should be necessary if future implementations continue to follow the existing specifications.
+1. Add new configuration fields to `GameConfiguration`
+2. Add new award types to the `AwardTitle` union
+3. Update this document with the new rules
+4. Ensure backward compatibility with existing sessions
+5. Add migration logic if needed
 
 ---
 
-# 14. Technical Debt Register
+## 15. Document Governance
 
-The project intentionally carries a small amount of controlled technical debt.
+This document is versioned independently of the app (currently **v1.0**).
 
-These items are known and should be addressed before the first production release.
+Any change to gameplay rules requires:
 
-## UI Refinement
+- Version bump
+- Changelog entry below
+- Corresponding updates to `DATA_MODEL.md` if entity shapes change
 
-Several reusable components should be visually aligned with the finalized Warm Material specification.
+### Changelog
 
-This includes:
-
-- spacing refinement
-- elevation tuning
-- interaction polish
-- typography adjustments
-- animation consistency
-
-These improvements should preserve existing public APIs.
-
----
-
-## Missing Screen Layer
-
-Although the reusable component library is largely established, production screens have not yet been assembled.
-
-Future work should prioritize constructing screens from existing components rather than introducing new UI patterns.
-
----
-
-## Gameplay Engine
-
-Core gameplay services have not yet been implemented.
-
-This includes:
-
-- player selection
-- dare selection
-- round lifecycle
-- skip consumption
-- pass handling
-- history recording
-- statistics generation
-- award calculation
-
-Business rules should be implemented as isolated services to maximize testability.
-
----
-
-## Persistence Layer
-
-Persistent storage is not yet integrated.
-
-Future persistence should support:
-
-- custom dare packs
-- custom dares
-- application settings
-- unfinished game recovery
-
-Bundled dare packs must always remain immutable.
-
----
-
-## Testing
-
-No automated testing currently exists.
-
-Testing should eventually include:
-
-- unit tests
-- component tests
-- integration tests
-- gameplay service tests
-
-Testing infrastructure should be introduced only after the application architecture stabilizes.
-
----
-
-# 15. Immediate Development Priorities
-
-The recommended implementation order for the next development milestones is as follows.
-
-### Priority 1
-
-Audit every reusable component against:
-
-- PROJECT_CONTEXT.md
-- UI_SPECIFICATIONS.md
-- COMPONENT_GUIDELINES.md
-
-Refine visual behavior where necessary without breaking public APIs.
-
----
-
-### Priority 2
-
-Implement production-quality application screens.
-
-Suggested order:
-
-1. Splash
-2. Player Setup
-3. Game Setup
-4. Ready Lobby
-5. Spin
-6. Reveal
-7. History
-8. Summary
-9. Settings
-10. About
-
----
-
-### Priority 3
-
-Introduce application state.
-
-This includes:
-
-- player management
-- configuration
-- active game session
-- round progression
-- settings
-
-State should remain independent of presentation components.
-
----
-
-### Priority 4
-
-Implement gameplay services.
-
-Examples include:
-
-- random player selection
-- random dare selection
-- history generation
-- award calculation
-- summary generation
-
-Business logic should never depend on UI components.
-
----
-
-### Priority 5
-
-Introduce motion.
-
-All animations must use the timing tokens defined by the design system.
-
-Animations should enhance usability without becoming distracting.
-
----
-
-### Priority 6
-
-Complete accessibility verification.
-
-Review:
-
-- screen reader support
-- dynamic font scaling
-- touch target sizing
-- semantic accessibility roles
-- color contrast
-
-Accessibility should be treated as a production requirement rather than an enhancement.
-
----
-
-### Priority 7
-
-Performance optimization.
-
-Review:
-
-- unnecessary re-renders
-- memoization opportunities
-- expensive computations
-- animation performance
-- bundle size
-
-Optimization should be evidence-driven rather than premature.
-
----
-
-# 16. AI Implementation Instructions
-
-Every future AI session must follow this sequence before generating code.
-
-1. Read PROJECT_CONTEXT.md completely.
-
-2. Read UI_SPECIFICATIONS.md.
-
-3. Read DATA_MODEL.md.
-
-4. Read GAME_RULES.md.
-
-5. Read COMPONENT_GUIDELINES.md.
-
-6. Read CURRENT_STATE.md.
-
-7. Inspect the existing implementation before modifying any file.
-
-8. Reuse existing architecture wherever possible.
-
-9. Preserve public APIs unless an intentional breaking change has been approved.
-
-10. Avoid duplicate implementations.
-
-11. Never hardcode design values that already exist within the theme.
-
-12. Validate TypeScript.
-
-13. Validate ESLint.
-
-14. Explain every modified file.
-
-15. Update CURRENT_STATE.md whenever a significant implementation milestone has been completed.
-
----
-
-# 17. Definition of "Current State"
-
-This document represents the implementation status of the repository—not the intended future architecture.
-
-It should always answer the following questions for any developer or AI assistant:
-
-- What has already been implemented?
-- What remains incomplete?
-- What architectural decisions have already been made?
-- What should be preserved?
-- What should be improved?
-- What is the recommended next step?
-
-Keeping this document accurate ensures that future work builds upon the existing foundation instead of unintentionally duplicating or replacing it.
-
-This file should evolve alongside the project and remain synchronized with every major milestone.
+- **v1.0** — Initial gameplay specification covering lifecycle, progression, rotation, selection, skips, passes, history, summary, awards, and edge cases.

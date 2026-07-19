@@ -1,46 +1,45 @@
-// NOTE: This file contains *only* semantic design tokens.
-// Components must import colors from "@/theme/colors" and never hardcode color values.
+/**
+ * Semantic color tokens — single source of truth.
+ *
+ * Every color in the application must reference this file.
+ * Values match PROJECT_CONTEXT.md Section 5.2 exactly.
+ *
+ * Components must import from "@/theme", never from this file directly.
+ */
 
 const ACCENT_PRIMARY = "#E8825C" as const;
 const TEXT_PRIMARY = "#241F1C" as const;
 const TEXT_SECONDARY = "#8A7F76" as const;
 
-/**
- * Semantic color system (single source of truth).
- *
- * Intended to be the only file that changes for future theming.
- */
 export const colors = Object.freeze({
-  /**
-   * Background colors used behind most screen content.
-   */
+  /** Screen background — #FAF8F5 */
   background: "#FAF8F5",
 
   /**
-   * Surface colors used for cards, sheets, and UI blocks.
+   * Surface colors for cards, sheets, and UI blocks.
    */
   surface: {
-    /** Standard surface */
+    /** Cards, resting elements — #FFFFFF */
     default: "#FFFFFF",
-    /** Raised surface for layering */
+    /** Sheets, modals — #F1ECE6 */
     elevated: "#F1ECE6",
   },
 
   /**
-   * Brand/primary colors (typically used for primary UI states).
+   * Primary brand colors.
    */
   primary: {
-    /** Default primary ink/text color */
+    /** Primary text, primary button fill — #3A332F */
     DEFAULT: "#3A332F",
-    /** Primary container/emphasis background */
+    /** Selected chip/toggle fill — #EFE2D6 */
     container: "#EFE2D6",
   },
 
   /**
-   * Accent colors for highlights, CTAs, and emphasized actions.
+   * Accent color for CTAs and highlights.
    */
   accent: {
-    /** Primary accent (CTA/highlight) */
+    /** Primary CTA, Spicy difficulty — #E8825C */
     primary: ACCENT_PRIMARY,
   },
 
@@ -48,75 +47,69 @@ export const colors = Object.freeze({
    * Text colors.
    */
   text: {
-    /** Primary text */
+    /** Body/heading text — #241F1C */
     primary: TEXT_PRIMARY,
-    /** Secondary text (helper/captions/secondary labels) */
+    /** Captions, helper text, disabled text — #8A7F76 */
     secondary: TEXT_SECONDARY,
-    /** Text displayed over dark/colored surfaces */
+    /** Text displayed over dark/colored surfaces — #FFFFFF */
     inverse: "#FFFFFF",
   },
 
   /**
-   * Status colors communicate outcomes and system messages.
+   * Status colors for outcomes and system messages.
    */
   status: {
-    /** Success confirmations */
+    /** Completed states — #4C9A5C */
     success: "#4C9A5C",
-    /** Warning/high-attention confirmations (uses accent primary) */
-    warning: ACCENT_PRIMARY,
-    /** Error/critical confirmations */
+    /** Destructive actions, Extreme difficulty — #E05353 */
     danger: "#E05353",
+    /**
+     * @deprecated Use colors.accent.primary instead.
+     */
+    warning: ACCENT_PRIMARY,
   },
 
   /**
-   * Difficulty colors represent domain intensity levels.
+   * Difficulty colors for game intensity levels.
    */
   difficulty: {
-    /** Mild difficulty */
+    /** Mild badges/dots — #7FB37A */
     mild: "#7FB37A",
-    /** Spicy difficulty (uses accent primary) */
+    /** Spicy badges/dots (same as accent, intentional) — #E8825C */
     spicy: ACCENT_PRIMARY,
-    /** Extreme difficulty */
+    /** Extreme badges/dots — #D65B5B */
     extreme: "#D65B5B",
   },
 
   /**
    * Border colors.
-   *
-   * Extend this group in future phases (e.g., focus, selected, danger).
    */
   border: {
-    /** Default border */
+    /** Default border — rgba(0,0,0,0.08) */
     default: "rgba(0,0,0,0.08)",
-    /** Focus ring/border (placeholder value, keeps semantics future-proof) */
-    focus: "rgba(0,0,0,0.08)",
   },
 
   /**
    * Divider colors (lines between sections).
    */
   divider: {
-    /** Default divider */
+    /** Default divider — rgba(0,0,0,0.05) */
     default: "rgba(0,0,0,0.05)",
   },
 
   /**
    * Overlay colors for scrims.
-   *
-   * Extend this group in future phases (e.g., scrim/backdrop variants).
    */
   overlay: {
-    /** Background scrim */
+    /** Background scrim — rgba(0,0,0,0.32) */
     scrim: "rgba(0,0,0,0.32)",
-    /** Backdrop overlay */
-    backdrop: "rgba(0,0,0,0.32)",
   },
 
   /**
    * Disabled state colors.
    */
   disabled: {
-    /** Disabled UI elements */
+    /** Disabled UI elements — #D8D2CC */
     default: "#D8D2CC",
   },
 
@@ -125,4 +118,3 @@ export const colors = Object.freeze({
 } as const);
 
 export type Colors = typeof colors;
-

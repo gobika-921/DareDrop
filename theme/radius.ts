@@ -1,38 +1,64 @@
-const baseRadius = {
-  /** Small rounded corners for compact controls such as inputs and chips. */
-  small: 8,
-
-  /** Medium rounded corners for list items, cards, and secondary buttons. */
-  medium: 12,
-
-  /** Large rounded corners for primary buttons, dialogs, and bottom sheets. */
-  large: 16,
-
-  /** Extra-large radius for feature cards and prominent surface containers. */
-  card: 24,
-
-  /** Fully rounded radius for pills, tags, and compact status badges. */
-  pill: 999,
-
-  /** Fully rounded radius for avatars, FABs, and circular controls. */
-  circle: 9999,
-} as const;
+/**
+ * Radius tokens — single source of truth.
+ *
+ * Values match PROJECT_CONTEXT.md Section 5.5 exactly.
+ */
 
 export const radius = Object.freeze({
-  ...baseRadius,
+  /** 12px — small inline elements */
+  sm: 12,
 
-  /** Flat corners used for elements that should not be rounded. */
+  /** 18px — buttons, inputs */
+  md: 18,
+
+  /** 24px — cards */
+  lg: 24,
+
+  /** 28px — dialogs, bottom sheets */
+  xl: 28,
+
+  /** 999px — chips, difficulty badges, pill buttons */
+  pill: 999,
+
+  // ── Practical extensions (not in canonical spec but required by components) ──
+
+  /** 0px — flat corners for elements that should not be rounded */
   none: 0,
 
-  /** Legacy alias for compact buttons; intentionally matches small. */
-  button: baseRadius.small,
+  /** 9999px — avatars, FABs, and circular controls */
+  circle: 9999,
 
-  /** Legacy alias for sheet-like surfaces; intentionally matches large. */
-  bottomSheet: baseRadius.large,
+  // ── Deprecated aliases (kept for component compatibility) ──
 
-  /** Legacy alias for large surfaces; intentionally matches large. */
-  xl: baseRadius.large,
+  /**
+   * @deprecated Use `sm` instead.
+   */
+  small: 12,
+
+  /**
+   * @deprecated Use `md` instead.
+   */
+  medium: 18,
+
+  /**
+   * @deprecated Use `lg` instead.
+   */
+  large: 24,
+
+  /**
+   * @deprecated Use `lg` instead. Legacy alias for feature cards.
+   */
+  card: 24,
+
+  /**
+   * @deprecated Use `xl` instead. Legacy alias for sheet-like surfaces.
+   */
+  bottomSheet: 28,
+
+  /**
+   * @deprecated Use `md` instead. Legacy alias for compact buttons.
+   */
+  button: 18,
 } as const);
 
 export type AppRadius = keyof typeof radius;
-

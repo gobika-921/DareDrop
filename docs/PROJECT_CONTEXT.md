@@ -104,10 +104,10 @@ export const theme = {
   spacing,
   radius,
   shadows,
-  motion,
+  animations,
 } as const;
 
-export type Theme = typeof theme;
+export type AppTheme = typeof theme;
 ```
 
 Components consume tokens via `import { theme } from "@/theme"` or a `useTheme()` hook if dark mode (Section 20 of `data_model.md`) is later implemented — never via raw hex/number literals.
@@ -311,10 +311,11 @@ export async function setActiveSession(session: GameSession | null): Promise<voi
 Expo Router file structure mirrors the fixed screen order below. No additional screens are introduced without updating this document first.
 
 ```
-Splash → Player Setup → Game Setup → Ready Lobby → Spin → Reveal
+Landing/Home → Player Setup → Game Setup → Ready Lobby → Spin → Reveal
   → (Skip Sheet | Pass Dialog, as overlays, not separate routes)
   → History (reachable from Reveal/Summary, not a forced step)
   → Summary → Settings → About
+  → Manage Custom Dares (reachable from Landing/Home, not part of gameplay flow)
 ```
 
 - **Skip Sheet** and **Pass Dialog** are modal overlays presented over the Reveal route, not their own Expo Router screens with their own back-stack entries — they must not be reachable via deep link or direct back-navigation as standalone pages.
@@ -530,7 +531,7 @@ Privacy (Future)
 
 The gameplay flow is linear.
 
-Splash
+Landing/Home
 → Player Setup
 → Game Setup
 → Ready Lobby
@@ -542,7 +543,7 @@ History may be opened during gameplay.
 
 Settings and About are independent utility screens.
 
-Custom pack management exists outside gameplay and is accessible before starting a game.
+Manage Custom Dares is accessible from Landing/Home and exists outside gameplay.
 
 Dialogs and bottom sheets never exist as standalone routes.
 
