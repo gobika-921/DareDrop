@@ -1,4 +1,4 @@
-import React, { forwardRef, memo, useMemo, useState } from "react";
+import React, { forwardRef, memo, useEffect, useMemo } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -7,9 +7,15 @@ import {
   type ViewStyle,
   View,
 } from "react-native";
+import Animated, {
+  interpolateColor,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { AppText } from "@/components/AppText";
-import { animations, colors, radius, spacing } from "@/theme";
+import { colors, radius, spacing } from "@/theme";
 
 export type AppSwitchLabelPosition = "left" | "right";
 
@@ -20,11 +26,15 @@ export interface AppSwitchProps extends Omit<PressableProps, "children" | "style
   label?: string;
   description?: string;
   labelPosition?: AppSwitchLabelPosition;
+  comingSoon?: boolean; // Shows "Coming soon" tag if true
   style?: StyleProp<ViewStyle>;
   testID?: string;
   accessibilityLabel?: string;
   accessibilityHint?: string;
 }
+
+const TRACK_OFF_COLOR = "#E0DAD3";
+const TRACK_ON_COLOR = colors.primary.DEFAULT;
 
 const AppSwitchComponent = forwardRef<React.ElementRef<typeof Pressable>, AppSwitchProps>((props, ref) => {
   const {
@@ -33,7 +43,8 @@ const AppSwitchComponent = forwardRef<React.ElementRef<typeof Pressable>, AppSwi
     disabled = false,
     label,
     description,
-    labelPosition = "right",
+    labelPosition = "left",
+    comingSoon = false,
     style,
     testID,
     accessibilityLabel,
@@ -44,50 +55,62 @@ const AppSwitchComponent = forwardRef<React.ElementRef<typeof Pressable>, AppSwi
     ...rest
   } = props;
 
-  const [pressed, setPressed] = useState(false);
+  const progress = useSharedValue(value ? 1 : 0);
 
-  const isOn = value;
-  const isPressed = pressed && !disabled;
-
-  const trackStyle = useMemo<StyleProp<ViewStyle>>(() => {
-    return [
-      styles.track,
-      {
-        backgroundColor: isOn
-          ? colors.accent.primary
-          : colors.surface.elevated,
-        borderColor: isOn
-          ? colors.accent.primary
-          : colors.border.default,
-      },
-      disabled ? styles.trackDisabled : null,
-      isPressed ? styles.trackPressed : null,
-    ];
-  }, [disabled, isOn, isPressed]);
-
-  const thumbStyle = useMemo<StyleProp<ViewStyle>>(() => {
-    return [
-      styles.thumb,
-      {
-        backgroundColor: isOn ? colors.surface.default : colors.surface.default,
-        transform: [{ translateX: isOn ? spacing.md : 0 }],
-      },
-      disabled ? styles.thumbDisabled : null,
-      isPressed ? styles.thumbPressed : null,
-    ];
-  }, [disabled, isOn, isPressed]);
+  useEffect(() => {
+    progress.value = withTiming(value ? 1 : 0, { duration: 200 });
+  }, [value, progress]);
 
   const handlePress = () => {
-    if (!disabled) {
-      onValueChange?.(!isOn);
+    if (!disabled && !comingSoon) {
+      onValueChange?.(!value);
     }
   };
 
+  // Reanimated style for track color transition
+  const animatedTrackStyle = useAnimatedStyle(() => {
+    const trackColor = interpolateColor(
+      progress.value,
+      [0, 1],
+      [TRACK_OFF_COLOR, TRACK_ON_COLOR]
+    );
+
+    return {
+      backgroundColor: trackColor,
+      borderColor: trackColor,
+      opacity: disabled ? 0.4 : 1, // Spec: 40% opacity when disabled
+    };
+  });
+
+  // Reanimated style for smooth thumb sliding (exactly 20px travel: 44px track - 20px thumb - 4px total horizontal inset)
+  const animatedThumbStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateX: progress.value * 20,
+        },
+      ],
+    };
+  });
+
   const labelContent = label ? (
     <View style={styles.labelContainer}>
-      <AppText variant="bodyMedium" style={styles.labelText}>
-        {label}
-      </AppText>
+      <View style={styles.labelTitleRow}>
+        <AppText
+          variant="body"
+          style={[
+            styles.labelText,
+            disabled && { color: colors.text.secondary },
+          ]}
+        >
+          {label}
+        </AppText>
+        {comingSoon ? (
+          <AppText variant="caption" style={styles.comingSoonTag}>
+            Coming soon
+          </AppText>
+        ) : null}
+      </View>
       {description ? (
         <AppText variant="caption" style={styles.descriptionText}>
           {description}
@@ -96,7 +119,31 @@ const AppSwitchComponent = forwardRef<React.ElementRef<typeof Pressable>, AppSwi
     </View>
   ) : null;
 
-  const switchControl = (
+  const switchWidget = (
+    <Animated.View style={[styles.track, animatedTrackStyle]}>
+      <Animated.View style={[styles.thumb, animatedThumbStyle]} />
+    </Animated.View>
+  );
+
+  const isRow = Boolean(label);
+
+  const rowStyle = useMemo<StyleProp<ViewStyle>>(() => {
+    if (!isRow) {
+      return style;
+    }
+
+    return [
+      styles.rowContainer,
+      {
+        height: description ? 64 : 48,
+        paddingHorizontal: 24, // Row horizontal padding matches screen padding (24px)
+        opacity: disabled ? 0.6 : 1,
+      },
+      style,
+    ];
+  }, [isRow, description, disabled, style]);
+
+  return (
     <Pressable
       ref={ref}
       accessibilityRole={accessibilityRole}
@@ -104,29 +151,35 @@ const AppSwitchComponent = forwardRef<React.ElementRef<typeof Pressable>, AppSwi
       accessibilityHint={accessibilityHint}
       accessibilityState={{
         disabled,
-        checked: isOn,
+        checked: value,
         ...accessibilityState,
       }}
       accessible={accessible}
-      disabled={disabled}
+      disabled={disabled || comingSoon}
       onPress={handlePress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      style={[styles.container, style]}
+      style={rowStyle}
       testID={testID}
       {...rest}
     >
-      {labelPosition === "left" ? labelContent : null}
-
-      <View style={trackStyle}>
-        <View style={thumbStyle} />
-      </View>
-
-      {labelPosition === "right" ? labelContent : null}
+      {isRow ? (
+        <React.Fragment>
+          {labelPosition === "right" ? (
+            <React.Fragment>
+              {switchWidget}
+              {labelContent}
+            </React.Fragment>
+          ) : (
+            <React.Fragment>
+              {labelContent}
+              {switchWidget}
+            </React.Fragment>
+          )}
+        </React.Fragment>
+      ) : (
+        switchWidget
+      )}
     </Pressable>
   );
-
-  return switchControl;
 });
 
 AppSwitchComponent.displayName = "AppSwitch";
@@ -134,52 +187,53 @@ AppSwitchComponent.displayName = "AppSwitch";
 export const AppSwitch = memo(AppSwitchComponent);
 
 const styles = StyleSheet.create({
-  container: {
+  rowContainer: {
     flexDirection: "row",
     alignItems: "center",
-    alignSelf: "flex-start",
-    minHeight: 44,
-    gap: spacing.sm,
+    justifyContent: "space-between",
+    width: "100%",
   },
   labelContainer: {
     flex: 1,
     justifyContent: "center",
+    marginRight: spacing.md,
+  },
+  labelTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
   },
   labelText: {
     color: colors.text.primary,
+    fontWeight: "500",
+  },
+  comingSoonTag: {
+    fontSize: 11,
+    color: colors.text.secondary,
+    marginLeft: 8,
+    includeFontPadding: false,
   },
   descriptionText: {
     color: colors.text.secondary,
-    marginTop: spacing.xs,
+    marginTop: 2,
   },
   track: {
-    width: 48,
-    height: 28,
+    width: 44, // Spec switch track: 44x24px
+    height: 24,
     borderRadius: radius.pill,
     borderWidth: 1,
     justifyContent: "center",
-    paddingHorizontal: 2,
-  },
-  trackDisabled: {
-    opacity: 0.65,
-  },
-  trackPressed: {
-    transform: [{ scale: animations.scale.buttonPressed }],
+    paddingHorizontal: 1,
   },
   thumb: {
-    width: 22,
-    height: 22,
+    width: 20, // Spec thumb: 20x20px circle, 2px inset (handled by padding/translateX)
+    height: 20,
     borderRadius: radius.circle,
+    backgroundColor: "#FFFFFF",
     shadowColor: colors.primary.DEFAULT,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.16,
     shadowRadius: 2,
     elevation: 2,
-  },
-  thumbDisabled: {
-    opacity: 0.85,
-  },
-  thumbPressed: {
-    transform: [{ scale: 0.96 }],
+    left: 1, // 2px horizontal inset (1px padding + 1px left)
   },
 });

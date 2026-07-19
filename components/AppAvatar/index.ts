@@ -1,1 +1,1 @@
-export { AppAvatar, type AppAvatarProps, type AppAvatarColor, type AppAvatarSize, type AppAvatarStatus } from "./AppAvatar";
+export { AppAvatar, type AppAvatarProps, type AppAvatarSize, type AppAvatarStatus } from "./AppAvatar";

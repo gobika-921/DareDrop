@@ -111,6 +111,12 @@ export const colors = Object.freeze({
   disabled: {
     /** Disabled UI elements — #D8D2CC */
     default: "#D8D2CC",
+    /** Primary button disabled background — #E5DFD8 */
+    primary: "#E5DFD8",
+    /** Accent button disabled background — #F0DED2 */
+    accent: "#F0DED2",
+    /** Destructive button disabled background — #F5D9D9 */
+    destructive: "#F5D9D9",
   },
 
   /** Explicit transparent token for UI consistency. */

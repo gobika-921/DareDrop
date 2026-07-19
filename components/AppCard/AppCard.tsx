@@ -1,4 +1,4 @@
-import React, { forwardRef, memo, useMemo, useState } from "react";
+import React, { forwardRef, memo, useMemo } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -8,6 +8,11 @@ import {
   type ViewStyle,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import {
   animations,
@@ -17,9 +22,11 @@ import {
   spacing,
 } from "@/theme";
 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
 export type AppCardVariant = "default" | "elevated" | "outlined" | "filled" | "interactive";
-export type AppCardPadding = "none" | "small" | "medium" | "large";
-export type AppCardElevation = "none" | "small" | "medium" | "large";
+export type AppCardPadding = "none" | "small" | "medium" | "large" | "xl" | "xxl";
+export type AppCardElevation = "none" | "resting" | "elevated";
 
 export interface AppCardProps extends Omit<ViewProps, "children"> {
   children?: React.ReactNode;
@@ -35,8 +42,8 @@ const AppCardComponent = forwardRef<React.ElementRef<typeof View>, AppCardProps>
   const {
     children,
     variant = "default",
-    padding = "medium",
-    elevation = "medium",
+    padding = "xxl",
+    elevation = "resting",
     style,
     onPress,
     disabled = false,
@@ -47,19 +54,23 @@ const AppCardComponent = forwardRef<React.ElementRef<typeof View>, AppCardProps>
     ...rest
   } = props;
 
-  const [pressed, setPressed] = useState(false);
+  const scale = useSharedValue(1);
 
   const paddingValue = useMemo(() => {
     switch (padding) {
       case "none":
         return 0;
       case "small":
-        return spacing.sm;
-      case "large":
-        return spacing.xl;
+        return spacing.sm; // 8px
       case "medium":
+        return spacing.md; // 12px
+      case "large":
+        return spacing.lg; // 16px
+      case "xl":
+        return spacing.xl; // 20px
+      case "xxl":
       default:
-        return spacing.lg;
+        return spacing.xxl; // 24px (canonical card padding)
     }
   }, [padding]);
 
@@ -67,13 +78,11 @@ const AppCardComponent = forwardRef<React.ElementRef<typeof View>, AppCardProps>
     switch (elevation) {
       case "none":
         return shadows.none;
-      case "small":
-        return shadows.small;
-      case "large":
-        return shadows.large;
-      case "medium":
+      case "elevated":
+        return shadows.elevated;
+      case "resting":
       default:
-        return shadows.medium;
+        return shadows.resting;
     }
   }, [elevation]);
 
@@ -84,24 +93,28 @@ const AppCardComponent = forwardRef<React.ElementRef<typeof View>, AppCardProps>
           backgroundColor: colors.surface.default,
           borderColor: colors.transparent,
           borderWidth: 0,
+          shadow: shadows.elevated,
         };
       case "outlined":
         return {
           backgroundColor: colors.surface.default,
           borderColor: colors.border.default,
           borderWidth: 1,
+          shadow: shadows.none,
         };
       case "filled":
         return {
           backgroundColor: colors.surface.elevated,
           borderColor: colors.transparent,
           borderWidth: 0,
+          shadow: shadows.none,
         };
       case "interactive":
         return {
           backgroundColor: colors.surface.default,
           borderColor: colors.transparent,
           borderWidth: 0,
+          shadow: shadowValue,
         };
       case "default":
       default:
@@ -109,47 +122,76 @@ const AppCardComponent = forwardRef<React.ElementRef<typeof View>, AppCardProps>
           backgroundColor: colors.surface.default,
           borderColor: colors.transparent,
           borderWidth: 0,
+          shadow: shadowValue,
         };
     }
-  }, [variant]);
+  }, [variant, shadowValue]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   const baseStyle = useMemo<StyleProp<ViewStyle>>(() => {
+    const isElevatedVariant = variant === "elevated";
+    const resolvedShadow = isElevatedVariant ? shadows.elevated : resolvedVariantStyle.shadow;
+
     return [
       styles.card,
       {
         backgroundColor: resolvedVariantStyle.backgroundColor,
         borderColor: resolvedVariantStyle.borderColor,
-        borderRadius: radius.large,
+        borderRadius: radius.lg, // Use canonical radius.lg (24px)
         borderWidth: resolvedVariantStyle.borderWidth,
         padding: paddingValue,
-        shadowColor: shadowValue.shadowColor,
-        shadowOffset: shadowValue.shadowOffset,
-        shadowOpacity: shadowValue.shadowOpacity,
-        shadowRadius: shadowValue.shadowRadius,
-        elevation: shadowValue.elevation,
+        shadowColor: resolvedShadow.shadowColor,
+        shadowOffset: resolvedShadow.shadowOffset,
+        shadowOpacity: resolvedShadow.shadowOpacity,
+        shadowRadius: resolvedShadow.shadowRadius,
+        elevation: resolvedShadow.elevation,
       },
-      pressed && onPress && !disabled ? styles.pressed : null,
+      disabled ? styles.disabled : null,
       style,
     ];
-  }, [disabled, onPress, paddingValue, pressed, resolvedVariantStyle.backgroundColor, resolvedVariantStyle.borderColor, resolvedVariantStyle.borderWidth, shadowValue, style]);
+  }, [disabled, paddingValue, resolvedVariantStyle, variant, style]);
 
-  if (onPress) {
+  const handlePressIn = () => {
+    if (!disabled && variant === "interactive") {
+      scale.value = withTiming(animations.pressScale, {
+        duration: animations.duration.pressScale,
+      });
+    }
+  };
+
+  const handlePressOut = () => {
+    if (!disabled && variant === "interactive") {
+      scale.value = withTiming(1, {
+        duration: animations.duration.pressScale,
+      });
+    }
+  };
+
+  const isPressable = onPress && !disabled;
+
+  if (isPressable || variant === "interactive") {
     return (
-      <Pressable
+      <AnimatedPressable
         ref={ref as React.ForwardedRef<React.ElementRef<typeof Pressable>>}
         accessibilityRole={accessibilityRole ?? "button"}
         accessibilityLabel={accessibilityLabel}
+        accessibilityState={{ disabled }}
         accessible={accessible}
         disabled={disabled}
         onPress={onPress}
-        onPressIn={() => setPressed(true)}
-        onPressOut={() => setPressed(false)}
-        style={baseStyle}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[baseStyle, animatedStyle]}
         testID={testID}
         {...rest}
       >
         {children}
-      </Pressable>
+      </AnimatedPressable>
     );
   }
 
@@ -176,8 +218,7 @@ const styles = StyleSheet.create({
   card: {
     overflow: "hidden",
   },
-  pressed: {
-    transform: [{ scale: animations.scale.buttonPressed }],
-    opacity: 0.95,
+  disabled: {
+    opacity: 0.6,
   },
 });

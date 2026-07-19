@@ -1,4 +1,4 @@
-import React, { forwardRef, memo, useMemo, useState } from "react";
+import React, { forwardRef, memo, useImperativeHandle, useMemo, useRef, useState } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -11,7 +11,7 @@ import {
 } from "react-native";
 
 import { AppText } from "@/components/AppText";
-import { colors, radius, shadows, spacing, typography } from "@/theme";
+import { colors, radius, spacing, typography } from "@/theme";
 
 export type AppInputVariant = "filled" | "outlined" | "minimal";
 
@@ -79,6 +79,10 @@ const AppInputComponent = forwardRef<TextInput, AppInputProps>((props, ref) => {
   } = props;
 
   const [isFocused, setIsFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+
+  // Expose the internal TextInput methods via forwarded ref
+  useImperativeHandle(ref, () => inputRef.current!);
 
   const isDisabled = disabled || editable === false;
   const hasError = Boolean(error);
@@ -131,12 +135,12 @@ const AppInputComponent = forwardRef<TextInput, AppInputProps>((props, ref) => {
         borderColor: containerVariantStyle.borderColor,
         borderWidth: containerVariantStyle.borderWidth,
         borderBottomWidth: containerVariantStyle.borderBottomWidth,
-        borderRadius: variant === "minimal" ? radius.none : radius.medium,
+        borderRadius: variant === "minimal" ? radius.none : radius.md, // Use canonical radius.md (18px)
       },
       isDisabled ? styles.containerDisabled : null,
       style,
     ];
-  }, [containerVariantStyle.backgroundColor, containerVariantStyle.borderBottomWidth, containerVariantStyle.borderColor, containerVariantStyle.borderWidth, isDisabled, style, variant]);
+  }, [containerVariantStyle, isDisabled, style, variant]);
 
   const inputTextStyle = useMemo<StyleProp<TextStyle>>(() => {
     return [
@@ -165,6 +169,12 @@ const AppInputComponent = forwardRef<TextInput, AppInputProps>((props, ref) => {
   const helperTextContent = hasError ? error : helperText;
   const helperTextColor = hasError ? colors.status.danger : colors.text.secondary;
 
+  const handleContainerPress = () => {
+    if (!isDisabled) {
+      inputRef.current?.focus();
+    }
+  };
+
   return (
     <View style={styles.wrapper} accessible={accessible}>
       {label ? (
@@ -173,11 +183,11 @@ const AppInputComponent = forwardRef<TextInput, AppInputProps>((props, ref) => {
         </AppText>
       ) : null}
 
-      <View style={containerStyle}>
+      <Pressable onPress={handleContainerPress} style={containerStyle}>
         {leftIcon ? <View style={styles.iconWrapper}>{leftIcon}</View> : null}
 
         <TextInput
-          ref={ref}
+          ref={inputRef}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
@@ -192,7 +202,7 @@ const AppInputComponent = forwardRef<TextInput, AppInputProps>((props, ref) => {
           autoCorrect={autoCorrect}
           maxLength={maxLength}
           selectionColor={selectionColor ?? colors.accent.primary}
-          accessibilityLabel={accessibilityLabel}
+          accessibilityLabel={accessibilityLabel ?? label}
           accessibilityHint={accessibilityHint}
           accessible={accessible}
           allowFontScaling={allowFontScaling}
@@ -217,7 +227,7 @@ const AppInputComponent = forwardRef<TextInput, AppInputProps>((props, ref) => {
         ) : null}
 
         {rightIcon && !isClearVisible ? <View style={styles.iconWrapper}>{rightIcon}</View> : null}
-      </View>
+      </Pressable>
 
       {helperTextContent ? (
         <AppText variant="caption" style={[styles.helperText, { color: helperTextColor }]}>
@@ -245,12 +255,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
-    minHeight: spacing["3xl"],
-    shadowColor: shadows.none.shadowColor,
-    shadowOffset: shadows.none.shadowOffset,
-    shadowOpacity: shadows.none.shadowOpacity,
-    shadowRadius: shadows.none.shadowRadius,
-    elevation: shadows.none.elevation,
+    minHeight: spacing.huge, // Use canonical spacing.huge (48px)
   },
   containerDisabled: {
     opacity: 0.65,
@@ -271,7 +276,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 0,
   },
   inputMultiline: {
-    minHeight: spacing["3xl"],
+    minHeight: spacing.huge, // Use canonical spacing.huge (48px)
     textAlignVertical: "top",
   },
   inputDisabled: {
@@ -289,5 +294,7 @@ const styles = StyleSheet.create({
   },
   clearButtonText: {
     color: colors.text.secondary,
+    fontSize: 18,
+    fontWeight: "bold",
   },
 });

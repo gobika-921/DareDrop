@@ -1,4 +1,4 @@
-import React, { forwardRef, memo, useMemo, useState } from "react";
+import React, { forwardRef, memo, useMemo } from "react";
 import {
   Pressable,
   StyleSheet,
@@ -8,9 +8,16 @@ import {
   type ViewStyle,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { AppText } from "@/components/AppText";
-import { animations, colors, radius, shadows, spacing, typography } from "@/theme";
+import { animations, colors, radius, spacing } from "@/theme";
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export type AppChipVariant = "filled" | "outlined" | "tonal" | "difficulty";
 export type AppChipSize = "small" | "medium" | "large";
@@ -19,7 +26,7 @@ export type AppChipDifficulty = "mild" | "spicy" | "extreme";
 export interface AppChipProps extends Omit<PressableProps, "children" | "style"> {
   label: string;
   variant?: AppChipVariant;
-  size?: AppChipSize;
+  size?: AppChipSize; // Kept for API compatibility, but defaults to spec layout
   selected?: boolean;
   disabled?: boolean;
   leadingIcon?: React.ReactNode;
@@ -37,7 +44,6 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
   const {
     label,
     variant = "outlined",
-    size = "medium",
     selected = false,
     disabled = false,
     leadingIcon,
@@ -56,37 +62,7 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
     ...rest
   } = props;
 
-  const [pressed, setPressed] = useState(false);
-
-  const sizeConfig = useMemo(() => {
-    switch (size) {
-      case "small":
-        return {
-          height: 36,
-          paddingHorizontal: spacing.sm,
-          paddingVertical: spacing.xs,
-          textVariant: "caption" as const,
-          iconSize: 14,
-        };
-      case "large":
-        return {
-          height: 44,
-          paddingHorizontal: spacing.lg,
-          paddingVertical: spacing.sm,
-          textVariant: "bodyMedium" as const,
-          iconSize: 16,
-        };
-      case "medium":
-      default:
-        return {
-          height: 40,
-          paddingHorizontal: spacing.md,
-          paddingVertical: spacing.xs,
-          textVariant: "body" as const,
-          iconSize: 15,
-        };
-    }
-  }, [size]);
+  const scale = useSharedValue(1);
 
   const resolvedVariantStyles = useMemo(() => {
     const baseBorder = colors.border.default;
@@ -94,11 +70,10 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
     if (variant === "filled") {
       return {
         backgroundColor: selected ? colors.primary.container : colors.surface.elevated,
-        borderColor: selected ? colors.accent.primary : baseBorder,
+        borderColor: selected ? "rgba(58, 51, 47, 0.2)" : baseBorder,
         textColor: colors.primary.DEFAULT,
         iconColor: colors.primary.DEFAULT,
         borderWidth: 1,
-        shadow: selected ? shadows.small : shadows.none,
       };
     }
 
@@ -109,7 +84,6 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
         textColor: colors.text.primary,
         iconColor: colors.text.secondary,
         borderWidth: 1,
-        shadow: shadows.none,
       };
     }
 
@@ -126,21 +100,31 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
         textColor: tintColor,
         iconColor: tintColor,
         borderWidth: 1,
-        shadow: shadows.none,
       };
     }
 
+    // Default: outlined
     return {
-      backgroundColor: colors.surface.default,
-      borderColor: selected ? colors.accent.primary : baseBorder,
-      textColor: selected ? colors.accent.primary : colors.text.primary,
-      iconColor: selected ? colors.accent.primary : colors.text.secondary,
+      backgroundColor: selected ? colors.primary.container : colors.surface.default,
+      borderColor: selected ? "rgba(58, 51, 47, 0.2)" : baseBorder,
+      textColor: colors.text.primary,
+      iconColor: colors.text.secondary,
       borderWidth: 1,
-      shadow: shadows.none,
     };
   }, [difficulty, selected, variant]);
 
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
+  // Strict layout measurements per A.2 Chip specifications
   const chipStyle = useMemo<StyleProp<ViewStyle>>(() => {
+    const hasAvatar = Boolean(avatarColor);
+    const leftPad = hasAvatar ? 12 : 16;
+    const rightPad = removable ? 8 : 16;
+
     return [
       styles.chip,
       {
@@ -148,20 +132,30 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
         borderColor: resolvedVariantStyles.borderColor,
         borderWidth: resolvedVariantStyles.borderWidth,
         borderRadius: radius.pill,
-        minHeight: Math.max(sizeConfig.height, 44),
-        paddingHorizontal: sizeConfig.paddingHorizontal,
-        paddingVertical: sizeConfig.paddingVertical,
-        shadowColor: resolvedVariantStyles.shadow.shadowColor,
-        shadowOffset: resolvedVariantStyles.shadow.shadowOffset,
-        shadowOpacity: resolvedVariantStyles.shadow.shadowOpacity,
-        shadowRadius: resolvedVariantStyles.shadow.shadowRadius,
-        elevation: resolvedVariantStyles.shadow.elevation,
+        height: 36, // Exact spec height
+        paddingLeft: leftPad,
+        paddingRight: rightPad,
       },
       disabled ? styles.disabled : null,
-      pressed && onPress && !disabled ? styles.pressed : null,
       style,
     ];
-  }, [disabled, onPress, pressed, resolvedVariantStyles.backgroundColor, resolvedVariantStyles.borderColor, resolvedVariantStyles.borderWidth, resolvedVariantStyles.shadow, sizeConfig.height, sizeConfig.paddingHorizontal, sizeConfig.paddingVertical, style]);
+  }, [avatarColor, disabled, removable, resolvedVariantStyles, style]);
+
+  const handlePressIn = () => {
+    if (!disabled && onPress) {
+      scale.value = withTiming(animations.pressScale, {
+        duration: animations.duration.pressScale,
+      });
+    }
+  };
+
+  const handlePressOut = () => {
+    if (!disabled && onPress) {
+      scale.value = withTiming(1, {
+        duration: animations.duration.pressScale,
+      });
+    }
+  };
 
   const handleRemove = (event: GestureResponderEvent) => {
     event.stopPropagation();
@@ -169,7 +163,7 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
   };
 
   return (
-    <Pressable
+    <AnimatedPressable
       ref={ref}
       accessibilityRole={accessibilityRole ?? (onPress ? "button" : "text")}
       accessibilityLabel={accessibilityLabel ?? label}
@@ -182,9 +176,10 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
       accessible={accessible}
       disabled={disabled}
       onPress={onPress}
-      onPressIn={() => setPressed(true)}
-      onPressOut={() => setPressed(false)}
-      style={chipStyle}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      style={[chipStyle, animatedStyle]}
+      hitSlop={{ top: 4, bottom: 4, left: 0, right: 0 }} // Expand touch target to 44px
       testID={testID}
       {...rest}
     >
@@ -192,8 +187,8 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
         {avatarColor ? <View style={[styles.avatarDot, { backgroundColor: avatarColor }]} /> : null}
         {leadingIcon ? <View style={styles.leadingIcon}>{leadingIcon}</View> : null}
 
+        {/* 14px Medium Inter: deliberate exception per spec */}
         <AppText
-          variant={sizeConfig.textVariant}
           color="primary"
           style={[styles.labelText, { color: resolvedVariantStyles.textColor }]}
         >
@@ -207,14 +202,15 @@ const AppChipComponent = forwardRef<React.ElementRef<typeof Pressable>, AppChipP
             disabled={disabled}
             onPress={handleRemove}
             style={styles.removeButton}
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }} // Tap target 24x24px
           >
-            <AppText variant="caption" style={[styles.removeText, { color: resolvedVariantStyles.iconColor }]}>
+            <AppText style={[styles.removeText, { color: resolvedVariantStyles.iconColor }]}>
               ×
             </AppText>
           </Pressable>
         ) : null}
       </View>
-    </Pressable>
+    </AnimatedPressable>
   );
 });
 
@@ -232,33 +228,41 @@ const styles = StyleSheet.create({
   content: {
     flexDirection: "row",
     alignItems: "center",
-    gap: spacing.xs,
   },
   labelText: {
+    fontFamily: "Inter",
+    fontWeight: "500",
+    fontSize: 14,
+    lineHeight: 18,
     includeFontPadding: false,
   },
   avatarDot: {
-    width: spacing.sm,
-    height: spacing.sm,
-    borderRadius: radius.pill,
+    width: 8, // Spec: 8px diameter circle
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8, // Spec: 8px gap before the label
   },
   leadingIcon: {
     justifyContent: "center",
     alignItems: "center",
+    marginRight: spacing.xs,
   },
   removeButton: {
     justifyContent: "center",
     alignItems: "center",
-    marginLeft: spacing.xs,
+    marginLeft: 8,
+    width: 16,
+    height: 16,
   },
   removeText: {
-    lineHeight: typography.caption.lineHeight,
+    fontFamily: "Inter",
+    fontSize: 16,
+    lineHeight: 16,
+    fontWeight: "bold",
+    textAlign: "center",
+    includeFontPadding: false,
   },
   disabled: {
     opacity: 0.65,
-  },
-  pressed: {
-    transform: [{ scale: animations.scale.buttonPressed }],
-    opacity: 0.95,
   },
 });

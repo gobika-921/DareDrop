@@ -35,7 +35,7 @@ const AppDividerComponent = ({
         return colors.accent.primary;
       case "default":
       default:
-        return colors.divider.default;
+        return colors.divider.default; // Spec: 1px rgba(36,31,28,0.06) (theme colors.divider.default matches closely)
     }
   }, [color]);
 
@@ -51,26 +51,18 @@ const AppDividerComponent = ({
     }
   }, [thickness]);
 
-  const resolvedInset = useMemo(() => {
-    switch (variant) {
-      case "inset":
-        return spacing.md;
-      case "middleInset":
-        return spacing.md;
-      case "full":
-      default:
-        return 0;
-    }
-  }, [variant]);
-
   const resolvedStyle = useMemo<StyleProp<ViewStyle>>(() => {
-    if (orientation === "vertical") {
+    const isVertical = orientation === "vertical";
+    const insetVal = spacing.md; // Spec inset: spacing.md (12px)
+
+    if (isVertical) {
       return [
         styles.vertical,
         {
           backgroundColor: resolvedColor,
           width: resolvedThickness,
-          marginHorizontal: resolvedInset / 2,
+          marginTop: variant === "full" ? 0 : insetVal,
+          marginBottom: variant === "full" ? 0 : insetVal,
         },
         style,
       ];
@@ -81,12 +73,12 @@ const AppDividerComponent = ({
       {
         backgroundColor: resolvedColor,
         height: resolvedThickness,
-        marginLeft: variant === "full" ? 0 : resolvedInset,
-        marginRight: variant === "full" ? 0 : resolvedInset,
+        marginLeft: variant === "full" ? 0 : insetVal,
+        marginRight: variant === "middleInset" ? insetVal : 0,
       },
       style,
     ];
-  }, [orientation, resolvedColor, resolvedInset, resolvedThickness, style, variant]);
+  }, [orientation, resolvedColor, resolvedThickness, style, variant]);
 
   return <View accessible={false} testID={testID} style={resolvedStyle} />;
 };

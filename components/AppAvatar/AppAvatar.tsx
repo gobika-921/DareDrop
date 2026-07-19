@@ -1,25 +1,35 @@
-import React, { forwardRef, memo, useMemo, useState } from "react";
+import React, { forwardRef, memo, useMemo } from "react";
 import {
+  Image,
+  type ImageSourcePropType,
   Pressable,
-  StyleSheet,
   type PressableProps,
+  StyleSheet,
   type StyleProp,
   type ViewStyle,
   View,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+} from "react-native-reanimated";
 
 import { AppText } from "@/components/AppText";
 import { animations, colors, radius, shadows } from "@/theme";
 
-export type AppAvatarSize = "xs" | "sm" | "md" | "lg" | "xl";
-export type AppAvatarColor = "coral" | "green" | "blue" | "purple" | "amber" | "teal" | "rose";
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export type AppAvatarSize = "small" | "medium" | "large" | "xs" | "sm" | "md" | "lg" | "xl";
 export type AppAvatarStatus = "active" | "waiting" | "completed" | "skipped" | "passed" | "none";
 
 export interface AppAvatarProps extends Omit<PressableProps, "children" | "style"> {
   name: string;
+  source?: ImageSourcePropType;
   size?: AppAvatarSize;
-  color?: AppAvatarColor;
+  color?: string;
   selected?: boolean;
+  hasBorder?: boolean;
   status?: AppAvatarStatus;
   onPress?: PressableProps["onPress"];
   style?: StyleProp<ViewStyle>;
@@ -31,9 +41,11 @@ export interface AppAvatarProps extends Omit<PressableProps, "children" | "style
 const AppAvatarComponent = forwardRef<React.ElementRef<typeof Pressable>, AppAvatarProps>((props, ref) => {
   const {
     name,
-    size = "md",
-    color = "coral",
+    source,
+    size = "medium",
+    color,
     selected = false,
+    hasBorder = false,
     status = "none",
     onPress,
     style,
@@ -45,102 +57,139 @@ const AppAvatarComponent = forwardRef<React.ElementRef<typeof Pressable>, AppAva
     ...rest
   } = props;
 
-  const [pressed, setPressed] = useState(false);
+  const scale = useSharedValue(1);
 
+  // Fallback initials: strictly first character, uppercase per spec A.3
   const initials = useMemo(() => {
-    const normalized = name.trim().replace(/\s+/g, " ");
-    if (!normalized) {
+    const trimmed = name?.trim();
+    if (!trimmed) {
       return "?";
     }
-
-    const parts = normalized.split(" ").filter(Boolean);
-    if (parts.length === 1) {
-      return parts[0].slice(0, 1).toUpperCase();
-    }
-
-    return `${parts[0].slice(0, 1)}${parts[parts.length - 1].slice(0, 1)}`.toUpperCase();
+    return trimmed.charAt(0).toUpperCase();
   }, [name]);
 
+  // Size configuration per spec guidelines A.3 PlayerAvatar
   const sizeConfig = useMemo(() => {
-    switch (size) {
-      case "xs":
-        return { diameter: 28, fontVariant: "caption" as const, badgeSize: 8, borderWidth: 1 };
-      case "sm":
-        return { diameter: 36, fontVariant: "caption" as const, badgeSize: 10, borderWidth: 1 };
-      case "lg":
-        return { diameter: 56, fontVariant: "heading" as const, badgeSize: 14, borderWidth: 2 };
-      case "xl":
-        return { diameter: 72, fontVariant: "titleHeading" as const, badgeSize: 16, borderWidth: 2 };
-      case "md":
-      default:
-        return { diameter: 44, fontVariant: "bodyMedium" as const, badgeSize: 12, borderWidth: 2 };
+    // Standardize the props sizes to the 3 canonical categories: small, medium, large
+    const normSize = size.toLowerCase();
+    if (normSize === "small" || normSize === "xs" || normSize === "sm") {
+      return { diameter: 32, fontSize: 14, badgeSize: 10 };
     }
+    if (normSize === "large" || normSize === "lg" || normSize === "xl") {
+      return { diameter: 72, fontSize: 28, badgeSize: 18 };
+    }
+    // Default to medium
+    return { diameter: 48, fontSize: 18, badgeSize: 14 };
   }, [size]);
 
-  const colorStyle = useMemo(() => {
-    switch (color) {
-      case "green":
-        return { backgroundColor: colors.difficulty.mild, borderColor: colors.difficulty.mild };
-      case "blue":
-        return { backgroundColor: colors.primary.container, borderColor: colors.accent.primary };
-      case "purple":
-        return { backgroundColor: colors.surface.elevated, borderColor: colors.primary.DEFAULT };
-      case "amber":
-        return { backgroundColor: colors.status.warning, borderColor: colors.status.warning };
-      case "teal":
-        return { backgroundColor: colors.status.success, borderColor: colors.status.success };
-      case "rose":
-        return { backgroundColor: colors.status.danger, borderColor: colors.status.danger };
-      case "coral":
-      default:
-        return { backgroundColor: colors.accent.primary, borderColor: colors.accent.primary };
+  // Resolve player color: supports hex, standard React Native colors, or defaults to accent
+  const avatarBgColor = useMemo(() => {
+    if (!color) {
+      return colors.accent.primary;
     }
+    if (color in colors.difficulty) {
+      return colors.difficulty[color as keyof typeof colors.difficulty];
+    }
+    return color;
   }, [color]);
 
   const statusColor = useMemo(() => {
     switch (status) {
       case "active":
-        return colors.status.success;
-      case "waiting":
-        return colors.status.warning;
       case "completed":
-        return colors.status.success;
-      case "skipped":
-        return colors.status.danger;
       case "passed":
         return colors.status.success;
+      case "waiting":
+        return colors.status.warning; // Matches warning alias mapping to accent.primary
+      case "skipped":
+        return colors.status.danger;
       case "none":
       default:
         return colors.transparent;
     }
   }, [status]);
 
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
+
   const avatarStyle = useMemo<StyleProp<ViewStyle>>(() => {
+    const diameter = sizeConfig.diameter;
+    const borderSpacing = hasBorder ? 2 : 0;
+
     return [
       styles.avatar,
       {
-        width: sizeConfig.diameter,
-        height: sizeConfig.diameter,
+        width: diameter,
+        height: diameter,
         borderRadius: radius.circle,
-        backgroundColor: colorStyle.backgroundColor,
-        borderColor: selected ? colors.accent.primary : colorStyle.borderColor,
-        borderWidth: selected ? sizeConfig.borderWidth + 1 : sizeConfig.borderWidth,
-        shadowColor: selected ? colors.accent.primary : shadows.small.shadowColor,
-        shadowOffset: selected ? { width: 0, height: 2 } : shadows.small.shadowOffset,
-        shadowOpacity: selected ? 0.2 : shadows.small.shadowOpacity,
-        shadowRadius: selected ? 4 : shadows.small.shadowRadius,
-        elevation: selected ? 3 : shadows.small.elevation,
+        backgroundColor: avatarBgColor,
+        borderColor: selected ? colors.accent.primary : "#FFFFFF",
+        borderWidth: selected ? 3 : borderSpacing,
+        // Apply resting shadow when selected or as basic elevation
+        shadowColor: selected ? colors.accent.primary : shadows.resting.shadowColor,
+        shadowOffset: selected ? { width: 0, height: 2 } : shadows.resting.shadowOffset,
+        shadowOpacity: selected ? 0.2 : shadows.resting.shadowOpacity,
+        shadowRadius: selected ? 4 : shadows.resting.shadowRadius,
+        elevation: selected ? 3 : shadows.resting.elevation,
       },
-      pressed && onPress ? styles.pressed : null,
       style,
     ];
-  }, [colorStyle.backgroundColor, colorStyle.borderColor, onPress, pressed, selected, sizeConfig.borderWidth, sizeConfig.diameter, style]);
+  }, [avatarBgColor, hasBorder, selected, sizeConfig.diameter, style]);
 
-  const content = (
-    <View style={styles.avatarContent}>
-      <AppText variant={sizeConfig.fontVariant} style={styles.initialsText}>
-        {initials}
-      </AppText>
+  const handlePressIn = () => {
+    if (onPress) {
+      scale.value = withTiming(animations.pressScale, {
+        duration: animations.duration.pressScale,
+      });
+    }
+  };
+
+  const handlePressOut = () => {
+    if (onPress) {
+      scale.value = withTiming(1, {
+        duration: animations.duration.pressScale,
+      });
+    }
+  };
+
+  // Expand hitSlop for smaller avatars to reach 44x44px target
+  const resolvedHitSlop = useMemo(() => {
+    const diameter = sizeConfig.diameter;
+    if (diameter < 44) {
+      const padding = (44 - diameter) / 2;
+      return { top: padding, bottom: padding, left: padding, right: padding };
+    }
+    return 0;
+  }, [sizeConfig.diameter]);
+
+  const avatarContent = (
+    <View style={styles.content}>
+      {source ? (
+        <Image
+          source={source}
+          style={[
+            styles.image,
+            { borderRadius: radius.circle },
+          ]}
+          resizeMode="cover"
+        />
+      ) : (
+        <AppText
+          style={[
+            styles.initialsText,
+            {
+              fontSize: sizeConfig.fontSize,
+              lineHeight: sizeConfig.fontSize * 1.25,
+            },
+          ]}
+        >
+          {initials}
+        </AppText>
+      )}
+
       {status !== "none" ? (
         <View
           style={[
@@ -158,21 +207,24 @@ const AppAvatarComponent = forwardRef<React.ElementRef<typeof Pressable>, AppAva
 
   if (onPress) {
     return (
-      <Pressable
+      <AnimatedPressable
         ref={ref}
         accessibilityRole={accessibilityRole ?? "button"}
         accessibilityLabel={accessibilityLabel ?? `${name}, Player Avatar`}
         accessibilityHint={accessibilityHint}
+        accessibilityState={{ selected }}
         accessible={accessible}
+        disabled={false}
+        hitSlop={resolvedHitSlop}
         onPress={onPress}
-        onPressIn={() => setPressed(true)}
-        onPressOut={() => setPressed(false)}
-        style={avatarStyle}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[avatarStyle, animatedStyle]}
         testID={testID}
         {...rest}
       >
-        {content}
-      </Pressable>
+        {avatarContent}
+      </AnimatedPressable>
     );
   }
 
@@ -184,7 +236,7 @@ const AppAvatarComponent = forwardRef<React.ElementRef<typeof Pressable>, AppAva
       style={avatarStyle}
       testID={testID}
     >
-      {content}
+      {avatarContent}
     </View>
   );
 });
@@ -197,27 +249,32 @@ const styles = StyleSheet.create({
   avatar: {
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
+    overflow: "hidden",
   },
-  avatarContent: {
+  content: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    width: "100%",
+    height: "100%",
+  },
+  image: {
+    width: "100%",
+    height: "100%",
   },
   initialsText: {
+    fontFamily: "Poppins",
+    fontWeight: "600",
     color: colors.text.inverse,
+    textAlign: "center",
     includeFontPadding: false,
   },
   statusBadge: {
     position: "absolute",
-    bottom: 1,
-    right: 1,
+    bottom: -1,
+    right: -1,
     borderRadius: radius.circle,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: colors.surface.default,
-  },
-  pressed: {
-    transform: [{ scale: animations.scale.buttonPressed }],
-    opacity: 0.95,
   },
 });

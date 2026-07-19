@@ -1,4 +1,4 @@
-import React, { forwardRef, memo, useMemo, useState } from "react";
+import React, { forwardRef, memo, useMemo } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -7,6 +7,13 @@ import {
   type StyleProp,
   type ViewStyle,
 } from "react-native";
+import Animated, {
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from "react-native-reanimated";
 
 import {
   animations,
@@ -18,16 +25,21 @@ import {
 
 import { AppText } from "../AppText";
 
-export type AppButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "danger";
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export type AppButtonVariant = "primary" | "accent" | "secondary" | "tertiary" | "danger";
 export type AppButtonSize = "small" | "medium" | "large";
 
-export interface AppButtonProps extends Omit<PressableProps, "children"> {
+export interface AppButtonProps extends Omit<PressableProps, "children" | "style"> {
   children?: React.ReactNode;
   variant?: AppButtonVariant;
   size?: AppButtonSize;
   loading?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  pulse?: boolean;
+  circular?: boolean;
+  floating?: boolean;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -36,11 +48,14 @@ const AppButtonComponent = forwardRef<React.ElementRef<typeof Pressable>, AppBut
     const {
       children,
       variant = "primary",
-      size = "medium",
+      size,
       loading = false,
       disabled = false,
       leftIcon,
       rightIcon,
+      pulse = false,
+      circular = false,
+      floating = false,
       style,
       onPressIn,
       onPressOut,
@@ -51,98 +66,126 @@ const AppButtonComponent = forwardRef<React.ElementRef<typeof Pressable>, AppBut
       ...rest
     } = props;
 
-    const [pressed, setPressed] = useState(false);
+    const scale = useSharedValue(1);
+    const opacity = useSharedValue(1);
 
-    const sizeConfig = useMemo(() => {
-      switch (size) {
-        case "small":
-          return {
-            height: 36,
-            paddingHorizontal: spacing.md,
-            fontVariant: "button" as const,
-          };
-        case "large":
-          return {
-            height: 52,
-            paddingHorizontal: spacing.xl,
-            fontVariant: "button" as const,
-          };
-        case "medium":
-        default:
-          return {
-            height: 44,
-            paddingHorizontal: spacing.lg,
-            fontVariant: "button" as const,
-          };
+    const isDisabled = disabled || loading;
+
+    // Breathing pulse animation for hero buttons (Start Game / Spin)
+    React.useEffect(() => {
+      if (pulse && !isDisabled) {
+        opacity.value = withRepeat(
+          withSequence(
+            withTiming(0.85, { duration: 800 }),
+            withTiming(1.0, { duration: 800 })
+          ),
+          -1,
+          true
+        );
+      } else {
+        opacity.value = 1;
       }
-    }, [size]);
+    }, [pulse, isDisabled, opacity]);
 
-    const variantStyles = useMemo(() => {
-      const isDisabled = disabled || loading;
+    // Height calculations per spec guidelines (A.1 AppButton table)
+    const specHeight = useMemo(() => {
+      if (size === "small") return 36;
+      if (size === "medium") return 48;
+      if (size === "large") return 56;
 
       switch (variant) {
+        case "primary":
+        case "accent":
+        case "danger":
+          return 56;
         case "secondary":
+          return 48;
+        case "tertiary":
+          return 44;
+        default:
+          return 56;
+      }
+    }, [variant, size]);
+
+    // Styles for variants
+    const variantStyles = useMemo(() => {
+      switch (variant) {
+        case "accent":
           return {
-            backgroundColor: isDisabled ? colors.disabled.default : colors.surface.default,
-            borderColor: isDisabled ? colors.border.default : colors.border.default,
-            borderWidth: 1,
-            textColor: isDisabled ? colors.text.secondary : colors.text.primary,
-            iconColor: isDisabled ? colors.text.secondary : colors.text.primary,
-            shadow: shadows.none,
-          };
-        case "outline":
-          return {
-            backgroundColor: isDisabled ? colors.transparent : colors.transparent,
-            borderColor: isDisabled ? colors.disabled.default : colors.primary.DEFAULT,
-            borderWidth: 1,
-            textColor: isDisabled ? colors.text.secondary : colors.primary.DEFAULT,
-            iconColor: isDisabled ? colors.text.secondary : colors.primary.DEFAULT,
-            shadow: shadows.none,
-          };
-        case "ghost":
-          return {
-            backgroundColor: isDisabled ? colors.transparent : colors.transparent,
+            backgroundColor: isDisabled ? colors.disabled.accent : colors.accent.primary,
             borderColor: colors.transparent,
             borderWidth: 0,
-            textColor: isDisabled ? colors.text.secondary : colors.primary.DEFAULT,
+            textColor: "inverse",
+            iconColor: colors.text.inverse,
+            shadow: floating || circular ? shadows.elevated : shadows.none,
+          };
+        case "secondary":
+          return {
+            backgroundColor: colors.transparent,
+            borderColor: isDisabled
+              ? `${colors.text.secondary}99` // 60% opacity of textSecondary in hex roughly
+              : colors.primary.DEFAULT,
+            borderWidth: 1.5,
+            textColor: isDisabled ? "secondary" : "primary",
+            iconColor: isDisabled
+              ? colors.text.secondary
+              : colors.primary.DEFAULT,
+            shadow: shadows.none,
+          };
+        case "tertiary":
+          return {
+            backgroundColor: colors.transparent,
+            borderColor: colors.transparent,
+            borderWidth: 0,
+            textColor: isDisabled ? "secondary" : "primary",
             iconColor: isDisabled ? colors.text.secondary : colors.primary.DEFAULT,
             shadow: shadows.none,
           };
         case "danger":
           return {
-            backgroundColor: isDisabled ? colors.disabled.default : colors.status.danger,
+            backgroundColor: isDisabled ? colors.disabled.destructive : colors.status.danger,
             borderColor: colors.transparent,
             borderWidth: 0,
-            textColor: colors.text.inverse,
+            textColor: "inverse",
             iconColor: colors.text.inverse,
-            shadow: shadows.small,
+            shadow: shadows.none,
           };
         case "primary":
         default:
           return {
-            backgroundColor: isDisabled ? colors.disabled.default : colors.primary.DEFAULT,
+            backgroundColor: isDisabled ? colors.disabled.primary : colors.primary.DEFAULT,
             borderColor: colors.transparent,
             borderWidth: 0,
-            textColor: colors.text.inverse,
+            textColor: "inverse",
             iconColor: colors.text.inverse,
-            shadow: shadows.small,
+            shadow: shadows.none,
           };
       }
-    }, [disabled, loading, variant]);
+    }, [variant, isDisabled, floating, circular]);
 
-    const resolvedStyle = useMemo(() => {
+    const animatedStyles = useAnimatedStyle(() => {
+      return {
+        opacity: opacity.value,
+        transform: [{ scale: scale.value }],
+      };
+    });
+
+    const containerStyle = useMemo<StyleProp<ViewStyle>>(() => {
+      const isTertiary = variant === "tertiary";
+      const heightVal = isTertiary ? undefined : specHeight;
+
       const baseStyle: ViewStyle = {
         alignItems: "center",
         backgroundColor: variantStyles.backgroundColor,
         borderColor: variantStyles.borderColor,
-        borderRadius: radius.large,
+        borderRadius: circular ? 9999 : radius.md,
         borderWidth: variantStyles.borderWidth,
         flexDirection: "row",
-        height: sizeConfig.height,
+        height: heightVal,
         justifyContent: "center",
-        minHeight: sizeConfig.height,
-        opacity: disabled || loading ? 0.8 : 1,
-        paddingHorizontal: sizeConfig.paddingHorizontal,
+        minHeight: isTertiary ? 44 : heightVal,
+        paddingHorizontal: isTertiary ? spacing.sm : circular ? 0 : spacing.lg,
+        width: circular ? specHeight : "100%",
         shadowColor: variantStyles.shadow.shadowColor,
         shadowOffset: variantStyles.shadow.shadowOffset,
         shadowOpacity: variantStyles.shadow.shadowOpacity,
@@ -150,27 +193,52 @@ const AppButtonComponent = forwardRef<React.ElementRef<typeof Pressable>, AppBut
         elevation: variantStyles.shadow.elevation,
       };
 
-      return [baseStyle, pressed && !disabled && !loading ? styles.pressed : null, style];
-    }, [disabled, loading, pressed, sizeConfig.height, sizeConfig.paddingHorizontal, style, variantStyles]);
+      return [baseStyle, style];
+    }, [variant, specHeight, variantStyles, circular, style]);
+
+    const handlePressIn: PressableProps["onPressIn"] = (event) => {
+      if (!isDisabled) {
+        scale.value = withTiming(animations.pressScale, {
+          duration: animations.duration.pressScale,
+        });
+      }
+      onPressIn?.(event);
+    };
+
+    const handlePressOut: PressableProps["onPressOut"] = (event) => {
+      if (!isDisabled) {
+        scale.value = withTiming(1, {
+          duration: animations.duration.pressScale,
+        });
+      }
+      onPressOut?.(event);
+    };
+
+    // Calculate hitSlop to ensure min touch target of 44x44
+    const resolvedHitSlop = useMemo(() => {
+      if (circular && specHeight < 44) {
+        const diff = (44 - specHeight) / 2;
+        return { top: diff, bottom: diff, left: diff, right: diff };
+      }
+      if (variant === "tertiary") {
+        return { top: 8, bottom: 8, left: 8, right: 8 };
+      }
+      return 0;
+    }, [circular, specHeight, variant]);
 
     return (
-      <Pressable
+      <AnimatedPressable
         ref={ref}
         accessibilityRole={accessibilityRole}
         accessibilityLabel={accessibilityLabel}
         accessibilityHint={accessibilityHint}
+        accessibilityState={{ disabled: isDisabled }}
         accessible
-        disabled={disabled || loading}
-        hitSlop={8}
-        onPressIn={(event) => {
-          setPressed(true);
-          onPressIn?.(event);
-        }}
-        onPressOut={(event) => {
-          setPressed(false);
-          onPressOut?.(event);
-        }}
-        style={resolvedStyle}
+        disabled={isDisabled}
+        hitSlop={resolvedHitSlop}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        style={[containerStyle, animatedStyles]}
         testID={testID}
         {...rest}
       >
@@ -178,25 +246,29 @@ const AppButtonComponent = forwardRef<React.ElementRef<typeof Pressable>, AppBut
           <ActivityIndicator
             color={variantStyles.iconColor}
             size="small"
+            style={styles.spinner}
           />
         ) : (
           <>
-            {leftIcon ? <>{leftIcon}</> : null}
+            {leftIcon ? <React.Fragment>{leftIcon}</React.Fragment> : null}
             {children ? (
               <AppText
-                variant={sizeConfig.fontVariant}
-                color={variantStyles.textColor as keyof typeof colors.text}
-                style={leftIcon || rightIcon ? styles.labelWithIcon : styles.label}
+                variant="button"
+                color={variantStyles.textColor}
+                style={[
+                  leftIcon || rightIcon ? styles.labelWithIcon : styles.label,
+                  isDisabled && variant === "secondary" && { opacity: 0.6 },
+                ]}
               >
                 {children}
               </AppText>
             ) : null}
-            {rightIcon ? <>{rightIcon}</> : null}
+            {rightIcon ? <React.Fragment>{rightIcon}</React.Fragment> : null}
           </>
         )}
-      </Pressable>
+      </AnimatedPressable>
     );
-  },
+  }
 );
 
 AppButtonComponent.displayName = "AppButton";
@@ -206,11 +278,13 @@ export const AppButton = memo(AppButtonComponent);
 const styles = StyleSheet.create({
   label: {
     marginHorizontal: 0,
+    textAlign: "center",
   },
   labelWithIcon: {
     marginHorizontal: spacing.sm,
+    textAlign: "center",
   },
-  pressed: {
-    transform: [{ scale: animations.scale.buttonPressed }],
+  spinner: {
+    alignSelf: "center",
   },
 });
