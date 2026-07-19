@@ -48,15 +48,15 @@ No feature should sacrifice long-term maintainability for short-term implementat
 | Shadow System | ✅ Complete |
 | Theme Barrel Export | ✅ Complete |
 | Reusable Component Library | 🟡 In Progress |
-| Application Screens | 🔴 Not Started |
-| Navigation Flow | 🟡 Skeleton Only |
-| Game Logic | 🔴 Not Started |
-| State Management | 🟡 Initial Structure |
+| Application Screens | 🟡 In Progress |
+| Navigation Flow | 🟡 In Progress |
+| Game Logic | ✅ Complete |
+| State Management | ✅ Complete |
 | Local Persistence | 🔴 Not Started |
 | Animation System | 🟡 Foundation Ready |
 | Accessibility Review | 🔴 Pending |
 | Performance Optimization | 🔴 Pending |
-| Unit Testing | 🔴 Pending |
+| Unit Testing | ✅ Complete |
 | Integration Testing | 🔴 Pending |
 | Production QA | 🔴 Pending |
 
@@ -343,9 +343,9 @@ Its purpose is to ensure that every screen within DareDrop is assembled from reu
 
 All reusable components are located under:
 
-components/
+`components/`
 
-Each component owns its own folder and exposes a clean public API through an index.ts barrel file.
+Each component owns its own folder and exposes a clean public API through an `index.ts` barrel file.
 
 Current implementation status:
 
@@ -607,11 +607,11 @@ Future work includes:
 
 Status
 
-🔴 Not Started
+✅ Complete
 
-The core gameplay engine has not yet been implemented.
+The core gameplay engine has been implemented inside `services/`.
 
-Pending systems include:
+Completed systems include:
 
 - player rotation
 - random player selection
@@ -634,20 +634,19 @@ Gameplay logic should never exist inside reusable UI components.
 
 Status
 
-🟡 Foundation Ready
+✅ Complete
 
-Global state architecture has been planned.
+Global state architecture has been planned and the core game session store is implemented.
 
-Production stores have not yet been implemented.
+Completed stores:
+
+- Game Session Store (`store/gameSessionStore.ts`) - Acts as the aggregate root for active gameplay state and delegates business logic to pure services.
 
 Future stores will likely include:
 
 - Settings Store
 - Player Store
 - Game Configuration Store
-- Game Session Store
-- History Store
-- Summary Store
 
 Each store should own one domain only.
 
