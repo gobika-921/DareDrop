@@ -420,5 +420,3 @@ Built as a university software project exploring interactive UI design, game log
 **Drop the dare.
 Own the moment.**
 
-```
-```
