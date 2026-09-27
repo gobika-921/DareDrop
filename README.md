@@ -355,18 +355,6 @@ The core application includes:
 
 ---
 
-## 🛠️ Tech Stack
-
-> Update this section according to the technologies used in the final implementation.
-
-* Frontend: `Your Framework`
-* Language: `Your Language`
-* Styling: `Your Styling Solution`
-* State Management: `Your State Management`
-* Build Tool: `Your Build Tool`
-
----
-
 ## 📦 Getting Started
 
 ### Clone the repository
