@@ -1,0 +1,6 @@
+{
+  "name": "DareDrop!",
+  "description": "A lively multiplayer party game of dares, wild choices, and unforgettable moments.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
